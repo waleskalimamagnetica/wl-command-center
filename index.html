@@ -502,7 +502,7 @@ tr.on td{background:var(--goldbg)}
 </div>
 <script>/* WL Command Center V13 · núcleo: utilidades, armazenamento, migração, arquivos, interface base */
 'use strict';
-const WL = window.WL = {version: '19.0', build: '2026-10-30 11:56'};
+const WL = window.WL = {version: '20.0', build: '2026-10-30 12:37'};
 // arquivo da equipe: o endereço público do Supabase pode vir gravado aqui (nunca senhas nem a chave service_role)
 const WL_PRECONFIG = /*WLPRECFG*/{"url": "https://eevjvysitwoxslpkotlr.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldmp2eXNpdHdveHNscGtvdGxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNjY3NDgsImV4cCI6MjEwODk0Mjc0OH0.hyiwmA2-M-xsUPv0ogOxV3r6wK5cwJnwI7T1S8TSLu0", "ownerId": "f6b51022-5856-4996-8acd-bbfabb2d9ae1"}/*WLPRECFG*/;
 try { WL.srcHTML = '<!doctype html>\n' + document.documentElement.outerHTML; } catch (e) {}
@@ -5062,6 +5062,262 @@ Views.sectors.hub.setup = () => { const st = Setup.steps(); const done = st.filt
 };
 NAV.hub.tabs.unshift(['setup', 'Ativação (passo a passo)']);
 
+/* WL V20 · integrações gratuitas: Google Agenda e Drive (Apps Script na sua conta), Instagram, Meta Ads, avisos (Telegram/e-mail), leads de formulário e ManyChat, rotinas do servidor */
+
+const FORM_PAGE = 'https://waleskalimamagnetica.github.io/wl-command-center/form.html';
+const Hub = {
+  st: null, stAt: 0, err: '', loading: false,
+  async call(action, p = {}) {
+    if (!Cloud.on()) throw new Error('Entre com seu login da nuvem para usar as integrações');
+    let c = Cloud.cfg(); if (c.session?.expires_at && c.session.expires_at < Date.now() + 60e3) { await Cloud.refresh(); c = Cloud.cfg(); }
+    const r = await fetch(`${Cloud.base()}/functions/v1/wl-hub`, {method: 'POST', headers: {apikey: c.key, Authorization: `Bearer ${c.session?.access_token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({action, ...p})});
+    const j = await r.json().catch(() => ({})); if (!r.ok || j.error) throw new Error(j.error || ('Erro ' + r.status)); return j;
+  },
+  async status(force = false) {
+    if (!Cloud.on()) return null; if (Hub.st && !force && Date.now() - Hub.stAt < 120e3) return Hub.st; if (Hub.loading) return Hub.st;
+    Hub.loading = true; try { Hub.st = await Hub.call('status'); Hub.stAt = Date.now(); Hub.err = ''; } catch (e) { Hub.err = e.message; } finally { Hub.loading = false; } return Hub.st;
+  },
+  // usado nas telas: se ainda não tem o status, busca e redesenha uma vez
+  need() { if (!Cloud.on()) return null; if (!Hub.st && !Hub.loading && !Hub.err) Hub.status().then(() => App.render()); return Hub.st; },
+  async refresh() { await Hub.status(true); App.render(); },
+  step: (n, html) => `<li><b>${n}</b> ${html}</li>`,
+  code: s => `<code class="copyable" data-act="copy" data-t="${esc(s)}" title="Clique para copiar">${esc(s)}</code>`,
+  ok: (on, yes = 'Conectado', no = 'Não conectado') => H.tag(on ? '✓ ' + yes : no, on ? 'green' : ''),
+};
+
+/* ---------- Google Agenda ao vivo no Calendário geral (não vai para o banco: fica só na tela de quem pode ver) ---------- */
+const GLive = {
+  ev: [], ranges: {}, busy: false, denied: false,
+  can() { return Cloud.on() && Hub.st?.google && !GLive.denied; },
+  ensure(from, to) {
+    if (!GLive.can() || GLive.busy) return; const key = from + '|' + to; if (GLive.ranges[key] && Date.now() - GLive.ranges[key] < 10 * 60e3) return;
+    GLive.busy = true; GLive.ranges[key] = Date.now();
+    Hub.call('google.events', {from, to}).then(j => { GLive.ev = GLive.ev.filter(e => e.date < from || e.date > to).concat((j.items || []).map(x => ({...x, gid: x.id, id: 'G' + x.id}))); App.render(); })
+      .catch(e => { if (/só da administradora/i.test(e.message)) GLive.denied = true; console.warn('Google Agenda:', e.message); }).finally(() => { GLive.busy = false; });
+  },
+  reset() { GLive.ranges = {}; GLive.ev = []; },
+};
+const _calEvents20 = CalAll.events;
+CalAll.events = (from, to, only = null) => {
+  const ev = _calEvents20(from, to, only); const L = new Set(only || CalAll.on());
+  if (L.has('gcal') && GLive.can()) { GLive.ensure(from, to); const C = CAL_LAYERS.find(l => l[0] === 'gcal')[2];
+    GLive.ev.filter(g => g.date <= to && (g.end || g.date) >= from).forEach(g => ev.push({layer: 'gcal', color: C, k: 'gcal', id: g.id, date: g.date < from ? from : g.date, end: g.end, title: `📅 ${g.time ? g.time + ' ' : ''}${g.title}`, sub: g.loc || g.cal || 'Google Agenda'})); }
+  return ev;
+};
+const _calOpen20 = CalAll.open;
+CalAll.open = (k, id) => {
+  if (k === 'gcal' && String(id).startsWith('G')) { const g = GLive.ev.find(x => x.id === id); if (!g) return;
+    const m = UI.open({kind: 'dialog', title: g.title, sub: `${fmtDate(g.date)}${g.time ? ' · ' + g.time + (g.endTime ? ' às ' + g.endTime : '') : ' · dia todo'}${g.cal ? ' · ' + esc(g.cal) : ''}`, body: `${g.loc ? `<p class="small">📍 ${esc(g.loc)}</p>` : ''}<p style="white-space:pre-wrap">${esc(String(g.desc || 'Sem descrição.').replace(/\n*\[WL\] criado pelo WL Command Center/, ''))}</p>`, foot: `${g.wl && Auth.isAdmin() ? '<button class="btn danger" data-del>Apagar da Google Agenda</button>' : ''}<button class="btn" data-close>Fechar</button>`});
+    $('[data-del]', m.el)?.addEventListener('click', async () => { if (!await UI.confirm('Apagar este evento da sua Google Agenda?', 'Só eventos criados pelo WL podem ser apagados daqui.', 'Apagar', true)) return; await Hub.call('google.deleteEvent', {id: g.gid}); m.close(); GLive.ev = GLive.ev.filter(x => x.id !== id); UI.toast('Evento apagado da Google Agenda'); App.render(); });
+    return; }
+  return _calOpen20(k, id);
+};
+const _calRender20 = CalAll.render;
+CalAll.render = (key = 'calall', o = {}) => {
+  const html = _calRender20(key, o); if (o.compact || !Cloud.on()) return html; const st = Hub.need();
+  const bar = st?.google ? `<div class="alert green small row" style="margin-bottom:10px;gap:8px"><span class="grow">📅 Google Agenda conectada ao vivo${st.google_email ? ' (' + esc(st.google_email) + ')' : ''}. Os eventos aparecem na camada “Google Agenda”${Auth.isAdmin() ? ' e só você vê, a não ser que libere para a equipe' : ''}.</span>${H.btn('⟳ Atualizar', 'gcal.reload', {cls: 'sm'})}${H.btn('＋ Evento no Google', 'gcal.new', {cls: 'sm primary'})}</div>`
+    : Auth.isAdmin() ? `<div class="alert small row" style="margin-bottom:10px;gap:8px"><span class="grow">Quer ver a sua Google Agenda aqui, sempre atualizada, e mandar compromissos da WL para ela?</span>${H.btn('Conectar Google', 'nav', {cls: 'sm primary', args: {to: '#/hub/connect'}})}</div>` : '';
+  return bar + html;
+};
+ACT['gcal.reload'] = () => { GLive.reset(); App.render(); UI.toast('Buscando a Google Agenda…'); };
+ACT['gcal.new'] = (el, e, d) => GEv.dialog({date: d.date || App.S.day || today()});
+const GEv = {
+  // monta um evento a partir de qualquer ficha com data
+  from(k, r) {
+    const m = {tasks: ['▤ ' + r.name, r.due, r.time], editorial: ['✎ ' + r.name, r.date, r.time], monthly: ['▦ ' + r.name, r.date, ''], leads: ['☏ Falar com ' + r.name, r.nextContact, ''], charges: ['₢ Cobrança ' + nameOf('mentors', r.mentor, r.name || ''), r.date, ''], goals: ['◎ Prazo da meta: ' + r.name, r.deadline, ''], products: ['🚀 Lançamento ' + r.name, r.launch, ''], dreams: ['🌟 ' + r.name, r.deadline, ''], teamplan: ['🗓 ' + r.name, r.start, r.time]}[k] || [r.name, r.date || today(), ''];
+    return {title: m[0], date: m[1] || today(), time: m[2] || '', desc: [r.details, r.notes, r.caption].filter(Boolean).join('\n\n').slice(0, 1500), k, id: r.id};
+  },
+  dialog(p) {
+    const m = UI.open({kind: 'dialog', title: 'Evento na Google Agenda', body: `<form class="form" id="gef"><label class="field wide">Título<input name="title" value="${esc(p.title || '')}" required></label><label class="field">Data<input type="date" name="date" value="${esc(p.date || today())}"></label><label class="field">Horário (vazio = dia todo)<input type="time" name="time" value="${esc(p.time || '')}"></label><label class="field">Duração<select name="minutes">${[[30, '30 min'], [60, '1 hora'], [90, '1h30'], [120, '2 horas'], [180, '3 horas']].map(([v, l]) => `<option value="${v}" ${v === 60 ? 'selected' : ''}>${l}</option>`).join('')}</select></label><label class="field">Local ou link<input name="loc" placeholder="Zoom, Meet, endereço…"></label><label class="field wide">Descrição<textarea name="desc" rows="3">${esc(p.desc || '')}</textarea></label></form>`, foot: `<button class="btn" data-close>Cancelar</button><button class="btn primary" data-save>Criar na Google Agenda</button>`});
+    $('[data-save]', m.el).onclick = async () => { const f = $('#gef', m.el); if (!f.title.value.trim()) return UI.toast('Informe o título', 'err'); const b = $('[data-save]', m.el); b.disabled = true; b.textContent = 'Criando…';
+      try { const j = await Hub.call('google.createEvent', {title: f.title.value.trim(), date: f.date.value, time: f.time.value, minutes: num(f.minutes.value), loc: f.loc.value, desc: f.desc.value}); if (p.k && p.id && get(p.k, p.id)) { Data.update(p.k, p.id, {gcalId: j.id}, 'Enviado para a Google Agenda'); } m.close(); GLive.reset(); UI.toast('Criado na sua Google Agenda ✓'); App.render(); Record.refresh?.(); }
+      catch (e) { b.disabled = false; b.textContent = 'Criar na Google Agenda'; UI.toast(e.message, 'err'); } };
+  },
+};
+ACT['gcal.push'] = (el, e, d) => { const r = get(d.k, d.id); if (!r) return; GEv.dialog(GEv.from(d.k, r)); };
+['tasks', 'editorial', 'monthly', 'leads', 'charges', 'goals', 'products', 'dreams', 'teamplan'].forEach(k => { const prev = Views.recordActions[k];
+  Views.recordActions[k] = r => (prev ? prev(r) : '') + (Cloud.on() && Hub.st?.google && (Auth.isAdmin() || Hub.st?.gcalTeam) ? H.btn(r.gcalId ? '📅 Na Google Agenda ✓' : '📅 Pôr na Google Agenda', 'gcal.push', {cls: 'sm', args: {k, id: r.id}, title: r.gcalId ? 'Já foi enviado; clique para criar de novo' : ''}) : ''); });
+
+/* ---------- Google Drive: uma pasta por mentorada, produto, ação… ---------- */
+const DRIVE_PATHS = {mentors: 'Mentoradas', products: 'Infoprodutos', monthly: 'Ações do mês', academy: 'Alunas', strategy: 'Documentos', team: 'Equipe', myactions: 'Estratégias', leads: 'Leads'};
+const DriveUI = {
+  cache: {}, busy: {},
+  load(fid) { if (DriveUI.busy[fid]) return; DriveUI.busy[fid] = true; Hub.call('drive.files', {id: fid}).then(j => { DriveUI.cache[fid] = {...j, at: Date.now()}; Record.refresh?.(); App.render(); }).catch(e => { DriveUI.cache[fid] = {error: e.message, at: Date.now()}; Record.refresh?.(); }).finally(() => { DriveUI.busy[fid] = false; }); },
+  icon: m => /folder/.test(m) ? '📁' : /pdf/.test(m) ? '📕' : /image/.test(m) ? '🖼' : /video/.test(m) ? '🎬' : /audio/.test(m) ? '🎧' : /spreadsheet|sheet|excel|csv/.test(m) ? '📊' : /presentation|slides/.test(m) ? '📽' : /document|word|text/.test(m) ? '📄' : '📎',
+  size: b => !b ? '' : b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB',
+  panel(k, r) {
+    if (!Cloud.on() || !Hub.st?.google) return '';
+    const dv = r.drive; if (!dv?.id) return H.panel(`<div class="row between"><h3 style="margin:0">📁 Pasta no Google Drive</h3>${H.btn('Criar pasta no Drive', 'drive.make', {cls: 'sm primary', args: {k, id: r.id}})}</div><p class="small muted" style="margin:6px 0 0">Cria <b>WL Command Center › ${esc(DRIVE_PATHS[k])} › ${esc(r.name || '')}</b> no seu Drive. Depois você vê e envia arquivos daqui mesmo.</p>`);
+    const c = DriveUI.cache[dv.id]; if (!c || Date.now() - c.at > 5 * 60e3) DriveUI.load(dv.id);
+    const list = c?.error ? `<div class="alert red small">${esc(c.error)}</div>` : !c ? '<p class="small muted">Carregando arquivos…</p>' : (c.folders.length + c.files.length) ? `<div class="list">${c.folders.map(f => `<a class="lrow" href="${esc(f.url)}" target="_blank" rel="noopener"><span>📁</span><div class="main-col"><strong>${esc(f.name)}</strong></div><span class="tiny muted">pasta</span></a>`).join('')}${c.files.sort((a, b) => b.updated.localeCompare(a.updated)).slice(0, 40).map(f => `<a class="lrow" href="${esc(f.url)}" target="_blank" rel="noopener"><span>${DriveUI.icon(f.mime)}</span><div class="main-col"><strong>${esc(f.name)}</strong><div class="tiny muted">${fmtDate(f.updated.slice(0, 10))} · ${DriveUI.size(f.size)}</div></div><span class="tiny muted">abrir ↗</span></a>`).join('')}</div>` : H.empty('Pasta vazia. Envie o primeiro arquivo.');
+    return H.panel(`<div class="row between"><h3 style="margin:0">📁 Arquivos no Google Drive</h3><div class="row"><a class="btn sm" href="${esc(dv.url)}" target="_blank" rel="noopener">Abrir pasta ↗</a><label class="btn sm primary">↑ Enviar arquivo<input type="file" hidden multiple data-chg="drive.up" data-fid="${esc(dv.id)}"></label>${H.btn('⟳', 'drive.reload', {cls: 'sm ghost', args: {fid: dv.id}, title: 'Atualizar lista'})}</div></div><div style="margin-top:10px">${list}</div>`);
+  },
+};
+Object.keys(DRIVE_PATHS).forEach(k => { const prev = Views.recordExtra[k]; Views.recordExtra[k] = r => (prev ? prev(r) : '') + DriveUI.panel(k, r); });
+ACT['drive.make'] = async (el, e, d) => { const r = get(d.k, d.id); el.disabled = true; el.textContent = 'Criando…'; try { const j = await Hub.call('drive.folder', {path: [DRIVE_PATHS[d.k]], name: r.name || d.k}); Data.update(d.k, r.id, {drive: {id: j.id, url: j.url}}, 'Pasta criada no Drive'); UI.toast('Pasta criada no seu Drive ✓'); Record.refresh?.(); App.render(); } catch (err) { el.disabled = false; el.textContent = 'Criar pasta no Drive'; throw err; } };
+ACT['drive.reload'] = (el, e, d) => { delete DriveUI.cache[d.fid]; DriveUI.load(d.fid); };
+ACT['drive.up'] = async el => { const fid = el.dataset.fid; const files = [...el.files]; if (!files.length) return; for (const f of files) { if (f.size > 25 * 1048576) { UI.toast(`${f.name}: máximo de 25 MB por arquivo`, 'err'); continue; } UI.toast(`Enviando ${f.name}…`); const data = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.onerror = no; fr.readAsDataURL(f); }); await Hub.call('drive.upload', {id: fid, name: f.name, mime: f.type || 'application/octet-stream', data}); } el.value = ''; UI.toast('Enviado para o Drive ✓'); delete DriveUI.cache[fid]; DriveUI.load(fid); };
+
+/* ---------- Instagram automático (métricas viram medições normais da aba Seguidores & métricas) ---------- */
+const IG = {
+  rows: [], media: [], at: 0, busy: false,
+  async load(force = false) {
+    if (!Cloud.on() || IG.busy || (!force && Date.now() - IG.at < 10 * 60e3)) return; IG.busy = true;
+    try { const owner = Cloud.owner(); IG.rows = await Cloud.api(`wl_metrics?owner_id=eq.${owner}&kind=eq.ig_day&order=day.desc&limit=120&select=day,data`) || []; IG.media = await Cloud.api(`wl_metrics?owner_id=eq.${owner}&kind=eq.ig_media&order=day.desc&limit=60&select=ref,day,data`) || []; IG.at = Date.now(); IG.toMetrics(); }
+    catch (e) { console.warn('IG', e.message); } finally { IG.busy = false; }
+  },
+  // cada dia vira uma medição (rede Instagram) sem duplicar
+  toMetrics() { let n = 0; IG.rows.forEach(r => { const d = r.data || {}; const ext = 'ig:' + r.day; const ex = col('metrics').find(m => m.extId === ext); const v = {network: 'Instagram', name: '@' + (d.username || 'instagram'), date: r.day, followers: d.followers || 0, reach: d.reach || 0, views: d.views || 0, engagement: d.total_interactions || 0, extId: ext, notes: 'Automático (API do Instagram)'};
+    if (!ex) { if (!Auth.isAdmin() && !Auth.sectors().includes('social')) return; Data.create('metrics', v); n++; } else if (ex.followers !== v.followers || ex.reach !== v.reach || ex.views !== v.views) { Object.assign(ex, v); n++; } }); if (n) { Store.save(); App.render(); } },
+  panel() {
+    const st = Hub.need(); if (!Cloud.on()) return '';
+    if (!st?.instagram) return Auth.isAdmin() ? `<div class="alert small row" style="margin-bottom:12px;gap:8px"><span class="grow">📸 Quer que seguidores, alcance e os números de cada post entrem sozinhos aqui todo dia?</span>${H.btn('Conectar Instagram', 'nav', {cls: 'sm primary', args: {to: '#/hub/connect'}})}</div>` : '';
+    IG.load(); const a = IG.rows[0]?.data, b = IG.rows[1]?.data, w = IG.rows[7]?.data; const f = n => intf(n || 0);
+    const top = [...IG.media].sort((x, y) => (y.data.reach || y.data.views || 0) - (x.data.reach || x.data.views || 0)).slice(0, 8);
+    return H.panel(H.head(`📸 Instagram @${st.ig_user || ''} · automático`, `Atualiza todo dia às 06:30. ${IG.rows[0] ? 'Último dia medido: ' + fmtDate(IG.rows[0].day) : 'A primeira medição aparece depois da primeira atualização.'}`, H.btn('⟳ Atualizar agora', 'ig.now', {cls: 'sm'}), 'h3')
+      + (a ? `<div class="grid narrow" style="margin-bottom:12px">${H.stat('Seguidores', f(a.followers), b ? `${a.followers - b.followers >= 0 ? '+' : ''}${a.followers - b.followers} desde o dia anterior` : '')}${H.stat('Ganho em 7 dias', w ? (a.followers - w.followers >= 0 ? '+' : '') + intf(a.followers - w.followers) : '…', 'aparece quando houver 8 dias')}${H.stat('Alcance (dia)', f(a.reach))}${H.stat('Visualizações (dia)', f(a.views))}${H.stat('Interações (dia)', f(a.total_interactions), `${f(a.likes)} curtidas · ${f(a.comments)} coment. · ${f(a.saves)} salvos · ${f(a.shares)} compart.`)}${H.stat('Cliques nos links do perfil', f(a.profile_links_taps))}</div>` : '')
+      + (top.length ? `<h4 style="margin:8px 0">Posts com mais alcance (últimos 25)</h4><div class="grid">${top.map(p => { const d = p.data; return `<a class="tile" href="${esc(d.link)}" target="_blank" rel="noopener" style="text-decoration:none">${d.thumb ? `<img src="${esc(d.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;margin-bottom:6px">` : ''}<span class="tag">${esc(d.type === 'REELS' ? 'Reels' : d.type === 'CAROUSEL_ALBUM' ? 'Carrossel' : d.type === 'STORY' ? 'Story' : 'Post')} · ${fmtDate(p.day)}</span><p class="small" style="margin:6px 0">${esc((d.caption || '').slice(0, 90))}</p><div class="tiny muted">👁 ${f(d.views)} · alcance ${f(d.reach)} · ❤ ${f(d.likes)} · 💬 ${f(d.comments)} · 🔖 ${f(d.saved)} · ↗ ${f(d.shares)}</div></a>`; }).join('')}</div>` : ''));
+  },
+};
+ACT['ig.now'] = async el => { el.disabled = true; el.textContent = 'Atualizando…'; try { await Hub.call('ig.refresh'); await IG.load(true); UI.toast('Instagram atualizado ✓'); } finally { App.render(); } };
+const _soMetrics20 = SO.metrics;
+SO.metrics = () => IG.panel() + _soMetrics20().replace('As APIs oficiais exigem aprovação de app e não são gratuitas para uso automático em arquivo local.', 'O Instagram pode entrar sozinho (Integrações › Conexões); as outras redes, por CSV ou à mão.');
+
+/* ---------- Meta Ads: puxa os números direto da conta de anúncios, no mesmo formato do CSV ---------- */
+const AdsPull = {
+  ranges() { const t = today(), y = addDays(t, -1), mk = monthKey(t); const pm = shiftMonth(mk, -1); return [['Ontem', y, y], ['Últimos 7 dias', addDays(t, -7), y], ['Últimos 14 dias', addDays(t, -14), y], ['Últimos 30 dias', addDays(t, -30), y], ['Este mês', mk + '-01', t], ['Mês passado', pm + '-01', addDays(mk + '-01', -1)]]; },
+  box() {
+    const st = Hub.need(); if (!Cloud.on()) return '';
+    if (!st?.ads || !st?.ads_account) return Auth.isAdmin() ? `<div class="alert small row" style="margin-bottom:12px;gap:8px"><span class="grow">⚡ Sem baixar CSV: conecte a conta de anúncios e puxe os números com um clique.</span>${H.btn('Conectar Meta Ads', 'nav', {cls: 'sm primary', args: {to: '#/hub/connect'}})}</div>` : '';
+    return H.panel(`<div class="row between"><h3 style="margin:0">⚡ Puxar direto do Meta Ads</h3><span class="tag green">${esc(st.ads_name || st.ads_account)}</span></div><p class="small muted" style="margin:6px 0 10px">Busca por anúncio (com campanha e conjunto) e abre a mesma análise do CSV.</p><div class="row" style="gap:6px;flex-wrap:wrap">${AdsPull.ranges().map(([l, f, t]) => H.btn(l, 'ads.pull', {cls: 'sm', args: {from: f, to: t, l}})).join('')}${H.btn('Escolher datas…', 'ads.pullAsk', {cls: 'sm ghost'})}</div>`);
+  },
+  csv(rows) { const cols = Object.keys(rows[0] || {}); return [cols.join(';'), ...rows.map(r => cols.map(c => `"${String(r[c] ?? '').replace(/"/g, '""')}"`).join(';'))].join('\n'); },
+  async run(from, to, label) {
+    UI.toast('Buscando no Meta Ads…'); const j = await Hub.call('ads.insights', {from, to, level: 'ad'}); const rows = (j.rows || []).filter(r => r.spend || r.impr);
+    if (!rows.length) return UI.toast('Nenhum anúncio com investimento nesse período', 'err');
+    const found = ['campaign', 'adset', 'ad', 'objective', 'spend', 'impr', 'reach', 'clicks', 'results', 'purchases', 'revenue', 'leads', 'messages', 'engagement', 'videoViews', ...TR_EXTRA, 'start', 'end'];
+    App.S.trDraft = {rows: rows.slice(0, 1500), level: 'anúncio', found, from, to, pt: false, text: AdsPull.csv(rows), fileName: `meta_ads_${from}_a_${to}.csv`, name: `Meta Ads · ${label || fmtShort(from) + ' a ' + fmtShort(to)}`, product: '', sales: '', revenue: '', notes: `Puxado automaticamente da conta ${j.account || ''}`};
+    App.go('#/traffic/import'); App.render(); UI.toast(`${rows.length} anúncio(s) carregado(s)`);
+  },
+};
+ACT['ads.pull'] = (el, e, d) => AdsPull.run(d.from, d.to, d.l);
+ACT['ads.pullAsk'] = () => { const m = UI.open({kind: 'dialog', title: 'Período do Meta Ads', body: `<form class="form" id="apf"><label class="field">De<input type="date" name="from" value="${addDays(today(), -7)}"></label><label class="field">Até<input type="date" name="to" value="${addDays(today(), -1)}"></label></form>`, foot: `<button class="btn" data-close>Cancelar</button><button class="btn primary" data-go>Puxar</button>`}); $('[data-go]', m.el).onclick = () => { const f = $('#apf', m.el); if (!f.from.value || !f.to.value || f.from.value > f.to.value) return UI.toast('Confira as datas', 'err'); m.close(); AdsPull.run(f.from.value, f.to.value); }; };
+const _trImport20 = TR.import; TR.import = () => (App.S.trDraft ? '' : AdsPull.box()) + _trImport20();
+if (TR.overview) { const _trOv20 = TR.overview; TR.overview = () => AdsPull.box() + _trOv20(); }
+
+/* ---------- leads do formulário e do ManyChat entram no CRM ---------- */
+const LeadIn = {
+  can: () => Auth.isAdmin() || Auth.sectors().includes('crm'),
+  ingest(p) {
+    const digits = s => String(s || '').replace(/\D/g, ''); const ph = digits(p.phone); const ig = norm(String(p.instagram || '').replace(/^@/, ''));
+    const ex = col('leads').find(l => (p.email && String(l.email || '').toLowerCase() === p.email) || (ph.length >= 8 && digits(l.phone).slice(-8) === ph.slice(-8)) || (ig && norm(String(l.instagram || '').replace(/^@/, '')) === ig));
+    const prod = p.interest ? col('products').find(x => x.name && norm(p.interest).includes(norm(x.name))) : null;
+    const src = p.via === 'form' ? 'formulário' : p.via === 'manychat' ? 'ManyChat' : p.via;
+    const note = `[${fmtDate(today())}] Entrou pelo ${src}${p.campaign ? ' · ' + p.campaign : ''}${p.interest ? '\nInteresse: ' + p.interest : ''}${p.moment ? '\nMomento: ' + p.moment : ''}${p.income ? '\nFaturamento/renda: ' + p.income : ''}${p.message ? '\nMensagem: ' + p.message : ''}${p.page ? '\nPágina: ' + p.page : ''}${p.utm ? '\nUTM: ' + p.utm : ''}`;
+    const tags = [...new Set([...(p.tags || []), p.via === 'manychat' ? 'manychat' : 'formulário'])];
+    if (ex) { Data.update('leads', ex.id, {notes: (ex.notes ? ex.notes + '\n\n' : '') + note, tags: [...new Set([...(ex.tags || []), ...tags])], stage: ex.stage === 'Perdido' ? 'Novo' : ex.stage || 'Novo', nextContact: today(), phone: ex.phone || p.phone, email: ex.email || p.email, instagram: ex.instagram || p.instagram, product: ex.product || prod?.id || ''}, 'Voltou pelo ' + src); return true; }
+    Data.create('leads', {name: p.name || p.instagram || p.email || p.phone || 'Lead', phone: p.phone, email: p.email, instagram: p.instagram, stage: 'Novo', temp: '🌤 Morno', origin: OPT.leadOrigin.includes(p.origin) ? p.origin : (p.via === 'manychat' ? 'Instagram' : 'Site / página'), campaign: p.campaign, product: prod?.id || '', tags, nextContact: today(), notes: note});
+    return true;
+  },
+};
+const _ingest20 = Cloud.ingest; Cloud.ingest = (source, p) => source === 'lead' ? LeadIn.ingest(p) : _ingest20(source, p);
+// a caixa de entrada passa a rodar sozinha (vendas e leads) para quem tem acesso
+Cloud.inbox = async (silent = false) => {
+  const rows = await Cloud.api('wl_inbox?processed=eq.false&order=created_at.asc&limit=500'); const mine = (rows || []).filter(r => r.source === 'lead' ? LeadIn.can() : (Auth.isAdmin() || Auth.perm('finance')));
+  if (!mine.length) { if (!silent) UI.toast('Nada novo na caixa de entrada'); return 0; }
+  let n = 0, leads = 0; const done = [];
+  for (const r of mine) { try { if (Cloud.ingest(r.source, r.payload)) { n++; if (r.source === 'lead') leads++; } done.push(r.id); } catch (e) { console.error(e); } }
+  if (done.length) await Cloud.api(`wl_inbox?id=in.(${done.join(',')})`, {method: 'PATCH', body: {processed: true}, prefer: 'return=minimal'});
+  Store.saveNow(); if (n || !silent) UI.toast(`${n - leads ? (n - leads) + ' lançamento(s) de venda' : ''}${n - leads && leads ? ' e ' : ''}${leads ? leads + ' lead(s) novo(s) no CRM' : ''}${!n ? 'Nada novo para lançar' : ''}`); return n;
+};
+const AutoInbox = {t: null, start() { if (AutoInbox.t) return; const tick = () => { if (!Cloud.on() || !Auth.user || document.hidden) return; if (!(Auth.isAdmin() || Auth.perm('finance') || LeadIn.can())) return; Cloud.inbox(true).then(n => { if (n) App.render(); }).catch(e => console.warn('caixa', e.message)); }; setTimeout(tick, 8000); AutoInbox.t = setInterval(tick, 3 * 60e3); }};
+
+/* ---------- tela de conexões ---------- */
+NAV.hub.tabs.splice(1, 0, ['connect', 'Conexões (Google, Instagram, avisos…)']);
+HB.connect = () => {
+  if (!Cloud.on()) return H.panel(H.head('Conexões', 'As integrações rodam no seu servidor (Supabase). Entre com o seu login da nuvem para configurar.') + H.btn('Ir para Nuvem', 'nav', {cls: 'primary', args: {to: '#/settings/cloud'}}));
+  if (!Auth.isAdmin()) return H.panel(H.head('Conexões', 'Só a administradora configura as conexões. O que já está ligado aparece nas telas de cada setor.'));
+  const st = Hub.need(); if (!st) return H.panel(Hub.err ? `<div class="alert red">${esc(Hub.err)}</div>${H.btn('Tentar de novo', 'hub.reload', {cls: 'sm'})}` : '<p class="muted">Carregando conexões…</p>');
+  const card = (icon, title, on, sub, body) => H.panel(`<div class="row between"><h3 style="margin:0">${icon} ${title}</h3>${on}</div>${sub ? `<p class="small muted" style="margin:6px 0 10px">${sub}</p>` : ''}${body}`);
+  const ol = items => `<ol class="small" style="line-height:1.85;padding-left:18px;margin:8px 0">${items.map(x => `<li>${x}</li>`).join('')}</ol>`;
+  const inp = (id, ph, btn, act) => `<div class="row" style="gap:6px;margin-top:8px"><input id="${id}" class="grow" placeholder="${esc(ph)}" autocomplete="off" style="min-width:220px">${H.btn(btn, act, {cls: 'primary sm'})}</div>`;
+  const when = s => s ? new Date(s).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'}) : 'ainda não rodou';
+  const n = st.notify || {};
+
+  const google = card('📅', 'Google Agenda, Drive e e-mail', Hub.ok(st.google, st.google_email || 'Conectado'), 'Um pequeno script na <b>sua</b> conta Google faz a ponte. É gratuito, não usa projeto no Google Cloud e só responde para o seu servidor (tem uma chave secreta).',
+    st.google ? `<div class="row" style="gap:6px;flex-wrap:wrap">${H.btn('Escolher agendas', 'hub.gcals', {cls: 'sm'})}${st.google_root ? `<a class="btn sm" href="${esc(st.google_root)}" target="_blank" rel="noopener">Abrir pasta no Drive ↗</a>` : ''}${H.btn('Fazer backup no Drive agora', 'hub.run', {cls: 'sm', args: {job: 'backup'}})}${H.btn('Desconectar', 'hub.gdis', {cls: 'sm ghost'})}</div><label class="chip ${st.gcalTeam ? 'on' : ''}" style="margin-top:10px"><input type="checkbox" data-act="hub.gteam" ${st.gcalTeam ? 'checked' : ''}> A equipe também vê a minha Google Agenda no Calendário geral</label><p class="tiny muted" style="margin-top:8px">Agendas lidas: ${st.calendars?.length ? st.calendars.length + ' escolhida(s)' : 'a principal'} · último backup: ${when(st.last?.backup)} · backups ficam em WL Command Center › Backups (30 últimos).</p>`
+    : ol([`Clique em ${H.btn('1. Copiar meu script', 'hub.gscript', {cls: 'sm primary'})}`, `Abra <a href="https://script.google.com/create" target="_blank" rel="noopener"><b>script.google.com/create</b></a> com a sua conta Google. Apague o que estiver escrito e cole (Ctrl+V). Clique no 💾 para salvar e dê o nome <b>WL Command Center</b>.`, 'No menu de funções lá em cima, escolha <b>autorizar</b> e clique em <b>▷ Executar</b>. O Google vai pedir permissão: <b>Revisar permissões › sua conta › Avançado › Acessar WL Command Center (não seguro) › Permitir</b>. Esse aviso aparece porque o script é seu e não passou por revisão do Google: é normal.', 'Clique em <b>Implantar › Nova implantação</b>. Na engrenagem, escolha <b>App da Web</b>. Executar como: <b>Eu</b>. Quem pode acessar: <b>Qualquer pessoa</b>. Clique em <b>Implantar</b> e copie o <b>URL do app da Web</b> (termina em /exec).', 'Cole aqui embaixo e clique em Conectar.']) + inp('gasurl', 'https://script.google.com/macros/s/…/exec', 'Conectar', 'hub.gconnect'));
+
+  const insta = card('📸', 'Instagram (seguidores, alcance e posts)', Hub.ok(st.instagram, '@' + (st.ig_user || '')), 'Usa a API oficial do Instagram, só leitura, com um app gratuito seu no painel da Meta. Não precisa ligar a uma Página do Facebook. Sua conta precisa ser <b>profissional</b> (criador de conteúdo ou empresa).',
+    st.instagram ? `<div class="row" style="gap:6px">${H.btn('Atualizar agora', 'ig.now', {cls: 'sm'})}${H.btn('Ver métricas', 'nav', {cls: 'sm', args: {to: '#/social/metrics'}})}${H.btn('Trocar token', 'hub.igdis', {cls: 'sm ghost'})}</div><p class="tiny muted" style="margin-top:8px">A chave é renovada sozinha toda segunda-feira (ela vence em 60 dias se ninguém renovar). Última renovação: ${when(st.ig_token_at)}.</p>`
+    : ol(['Entre em <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener"><b>developers.facebook.com/apps</b></a> com o seu Facebook e clique em <b>Criar app</b>. Nome: <b>WL Command Center</b>. Caso de uso: <b>Gerenciar mensagens e conteúdo no Instagram</b>. Tipo: Empresa, se perguntar. Sem portfólio empresarial está tudo bem.', 'No painel do app, abra <b>Instagram › Configuração da API com login do Instagram</b>.', 'Em <b>Gerar tokens de acesso</b>, clique em <b>Adicionar conta</b> e entre com o Instagram que você quer medir. Se pedir, aceite o convite de testadora em Instagram › Configurações › Apps e sites.', 'Ainda nessa linha, clique em <b>Gerar token</b>, marque que entende e copie o token (um texto longo que começa com IG).', 'Cole aqui embaixo. O app pode ficar em <b>modo de desenvolvimento</b> para sempre: como é para a sua própria conta, não precisa de revisão da Meta.']) + inp('igtok', 'Token do Instagram (IGAA…)', 'Conectar', 'hub.igconnect'));
+
+  const ads = card('📊', 'Meta Ads (tráfego sem CSV)', Hub.ok(st.ads && st.ads_account, st.ads_name || 'Conectado'), 'Leitura dos números da conta de anúncios com um <b>usuário do sistema</b> do seu Portfólio Empresarial. Só leitura: não cria, não pausa e não gasta nada. A chave não vence.',
+    st.ads ? (st.ads_account ? `<div class="row" style="gap:6px">${H.btn('Puxar números agora', 'nav', {cls: 'sm primary', args: {to: '#/traffic/import'}})}${H.btn('Trocar conta', 'hub.adsacc', {cls: 'sm'})}${H.btn('Desconectar', 'hub.adsdis', {cls: 'sm ghost'})}</div><p class="tiny muted" style="margin-top:8px">Todo dia às 06:30 o servidor guarda o resumo de ontem (investimento, compras, leads, ROAS) para o resumo semanal.</p>` : `<p class="small">Token aceito. Agora escolha a conta de anúncios:</p>${H.btn('Escolher conta de anúncios', 'hub.adsacc', {cls: 'sm primary'})}`)
+    : ol(['Use o mesmo app <b>WL Command Center</b> do Instagram (ou crie um). Em <b>Adicionar casos de uso</b>, inclua <b>Medir dados de desempenho dos anúncios com a API de Marketing</b>.', 'Abra <a href="https://business.facebook.com/settings/system-users" target="_blank" rel="noopener"><b>Configurações do negócio › Usuários › Usuários do sistema</b></a> e clique em <b>Adicionar</b>. Nome: <b>wl-leitura</b>. Função: <b>Funcionário</b>.', 'Clique em <b>Atribuir ativos › Contas de anúncios</b>, escolha a sua conta e marque só <b>Ver desempenho</b>.', 'Em <b>Contas › Apps</b>, adicione o app WL Command Center ao portfólio (se ainda não estiver).', 'De volta ao usuário wl-leitura, clique em <b>Gerar token</b>, escolha o app, validade <b>Nunca</b>, e marque apenas <b>ads_read</b>. Copie o token.', 'Cole aqui embaixo e escolha a conta.']) + inp('adstok', 'Token do usuário do sistema (EAA…)', 'Conectar', 'hub.adsconnect'));
+
+  const alerts = card('🔔', 'Avisos no celular (Telegram e/ou e-mail)', Hub.ok(st.telegram || (st.google && n.channel !== 'telegram'), st.telegram ? 'Telegram @' + st.telegram_bot : 'E-mail'), 'Venda aprovada, reembolso, lead novo, resumo do dia às 07:00 e resumo da semana na segunda. Telegram é grátis e chega na hora; o e-mail sai do seu próprio Gmail (precisa do Google conectado).',
+    (st.telegram ? '' : st.telegram_pending ? `<div class="alert small" style="margin-bottom:8px">Quase lá: abra o Telegram, procure <b>@${esc(st.telegram_bot)}</b>, toque em <b>Iniciar</b> e mande “oi”. Depois clique em ${H.btn('Já mandei', 'hub.tglink', {cls: 'sm primary'})}</div>` : ol(['No Telegram, procure <b>@BotFather</b> (o oficial, com selo azul) e mande <b>/newbot</b>.', 'Nome: <b>WL Avisos</b>. Usuário: algo como <b>wl_avisos_walleska_bot</b> (precisa terminar em bot).', 'Ele responde com um token (números:letras). Copie a linha inteira e cole aqui.']) + inp('tgtok', '123456789:AA…', 'Conectar bot', 'hub.tgconnect'))
+    + `<form class="form" id="nf" style="margin-top:12px"><label class="field">Mandar por<select name="channel">${[['telegram', 'Telegram'], ['email', 'E-mail (Gmail)'], ['both', 'Telegram e e-mail']].map(([v, l]) => `<option value="${v}" ${n.channel === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label><div class="field wide"><span>O que avisar</span><div class="chips">${[['sales', 'Vendas, Pix/boleto e reembolsos'], ['leads', 'Lead novo'], ['morning', 'Resumo do dia (07:00)'], ['weekly', 'Resumo da semana (segunda 09:00)']].map(([k, l]) => `<label class="chip ${n[k] !== false ? 'on' : ''}"><input type="checkbox" name="${k}" ${n[k] !== false ? 'checked' : ''}> ${l}</label>`).join('')}</div></div></form><div class="row" style="gap:6px;margin-top:8px">${H.btn('Salvar preferências', 'hub.nsave', {cls: 'sm primary'})}${H.btn('Mandar um teste', 'hub.ntest', {cls: 'sm'})}${H.btn('Mandar o resumo de hoje agora', 'hub.run', {cls: 'sm', args: {job: 'morning'}})}${st.telegram ? H.btn('Desligar Telegram', 'hub.tgdis', {cls: 'sm ghost'}) : ''}</div>`);
+
+  const lt = st.lead_token; const mcUrl = `${Cloud.base()}/functions/v1/wl-lead?t=${lt}`; const f = st.form;
+  const body = JSON.stringify({name: '{{full_name}}', phone: '{{phone}}', email: '{{email}}', instagram: '{{ig_username}}', campaign: 'Nome do fluxo', tags: 'manychat', via: 'manychat'}, null, 1);
+  const leads = card('🎯', 'Leads entrando sozinhos no CRM', Hub.ok(!!f, 'Formulário no ar', 'Formulário ainda não criado'), 'Cada cadastro vira um lead em <b>Leads & Vendas</b>, com origem, campanha e próximo contato para hoje. Se a pessoa já existe (mesmo e-mail, WhatsApp ou @), a ficha é atualizada em vez de duplicar.',
+    `<h4 style="margin:6px 0">1. Formulário seu (link para bio, stories, anúncios)</h4>${f ? `<p class="small">Link público: ${Hub.code(FORM_PAGE)} <a class="btn sm" href="${FORM_PAGE}" target="_blank" rel="noopener">Abrir ↗</a></p><p class="tiny muted">Para separar campanhas, acrescente <b>?c=nome</b> no fim (ex.: ${esc(FORM_PAGE)}?c=bio). Proteções: campo invisível anti-robô, tempo mínimo e limite de envios por hora.</p>` : ''}${H.btn(f ? 'Editar formulário' : 'Criar formulário', 'hub.form', {cls: 'sm primary'})}
+    <h4 style="margin:14px 0 6px">2. ManyChat (quem entra num fluxo vira lead)</h4>${ol(['No fluxo do ManyChat, adicione a ação <b>Solicitação externa</b> (External Request). Ela faz parte do plano Pro, que você já tem se usa os recursos pagos: não é cobrança nova.', `Método <b>POST</b>, URL: ${Hub.code(mcUrl)}`, `Em Corpo (Body), escolha JSON e cole: ${Hub.code(body)} Troque cada {{…}} pela variável do ManyChat usando o botão de inserir campo.`, 'Clique em Testar: o lead de teste aparece no CRM em até 3 minutos (e no Telegram na hora).'])}<div class="row">${H.btn('Gerar novo token (se vazou)', 'hub.ltok', {cls: 'sm ghost'})}</div>`);
+
+  const jobs = card('⏱', 'Rotinas automáticas do servidor', H.tag('ligadas', 'green'), 'Rodam sozinhas no Supabase, mesmo com o computador desligado. Também mantêm o projeto gratuito ativo.',
+    `<div class="list">${[['06:30', 'Métricas do Instagram e do Meta Ads (dia anterior)', 'metrics', st.last?.metrics], ['07:00', 'Resumo do dia no Telegram/e-mail', 'morning', st.last?.morning], ['03:00', 'Backup completo no seu Google Drive', 'backup', st.last?.backup], ['Seg 09:00', 'Resumo da semana e renovação da chave do Instagram', 'weekly', '']].map(([h, l, j, last]) => `<div class="lrow"><span class="tag">${h}</span><div class="main-col"><strong>${l}</strong>${last !== '' ? `<div class="tiny muted">Última vez: ${when(last)}</div>` : ''}</div>${H.btn('Rodar agora', 'hub.run', {cls: 'sm ghost', args: {job: j}})}</div>`).join('')}<div class="lrow"><span class="tag">a cada 3 min</span><div class="main-col"><strong>Vendas e leads novos entram no Financeiro e no CRM</strong><div class="tiny muted">Enquanto a WL estiver aberta em algum aparelho; o aviso no celular é na hora, sempre.</div></div>${H.btn('Buscar agora', 'cloud.inbox', {cls: 'sm ghost'})}</div></div>`);
+
+  return `<div class="alert small" style="margin-bottom:12px">Tudo aqui usa só ferramentas oficiais e gratuitas, em modo de leitura quando envolve as suas contas (Instagram e anúncios). Nenhuma conexão posta, responde ou gasta por você. As chaves ficam guardadas no seu servidor e nunca no navegador.</div><div class="cols2">${google}${alerts}${insta}${ads}${leads}${jobs}</div>`;
+};
+const hv = id => ($('#' + id)?.value || '').trim();
+const busyBtn = async (el, txt, fn) => { const o = el?.textContent; if (el) { el.disabled = true; el.textContent = txt; } try { return await fn(); } finally { if (el) { el.disabled = false; el.textContent = o; } } };
+ACT['hub.reload'] = () => { Hub.err = ''; Hub.refresh(); };
+ACT['hub.gscript'] = async el => { const j = await busyBtn(el, 'Gerando…', () => Hub.call('google.script')); await UI.copy(j.script); UI.toast('Script copiado. Agora cole em script.google.com'); };
+ACT['hub.gconnect'] = async el => { const url = hv('gasurl'); if (!url) return UI.toast('Cole o URL do app da Web', 'err'); const j = await busyBtn(el, 'Testando…', () => Hub.call('google.connect', {url})); UI.toast('Google conectado: ' + (j.email || '') + ' ✓'); GLive.reset(); Hub.refresh(); };
+ACT['hub.gdis'] = async () => { if (!await UI.confirm('Desconectar o Google?', 'A WL para de ler a agenda e de fazer backup no Drive. O script continua na sua conta; você pode apagá-lo em script.google.com.', 'Desconectar', true)) return; await Hub.call('google.disconnect'); GLive.reset(); Hub.refresh(); };
+ACT['hub.gteam'] = async el => { await Hub.call('gcal.team', {on: el.checked}); Hub.st.gcalTeam = el.checked; UI.toast(el.checked ? 'A equipe passa a ver sua agenda no Calendário geral' : 'Sua agenda volta a ser só sua'); };
+ACT['hub.gcals'] = async () => { const j = await Hub.call('google.calendars'); const sel = new Set(Hub.st.calendars || []); const items = j.items || [];
+  const m = UI.open({kind: 'dialog', title: 'Quais agendas aparecem na WL?', body: `<div class="list">${items.map(c => `<label class="lrow"><input type="checkbox" value="${esc(c.id)}" ${sel.has(c.id) || (!sel.size && c.own && /@gmail|@/.test(c.id) && items.indexOf(c) === 0) ? 'checked' : ''}><i class="legend-sq" style="background:${esc(c.color || '#4285f4')}"></i><div class="main-col"><strong>${esc(c.name)}</strong><div class="tiny muted">${c.own ? 'sua' : 'compartilhada com você'}</div></div></label>`).join('')}</div><p class="tiny muted">Eventos novos criados pela WL vão para a primeira agenda marcada.</p>`, foot: `<button class="btn" data-close>Cancelar</button><button class="btn primary" data-save>Salvar</button>`});
+  $('[data-save]', m.el).onclick = async () => { const ids = $$('input:checked', m.el).map(i => i.value); await Hub.call('google.pickCalendars', {ids}); m.close(); GLive.reset(); UI.toast('Agendas salvas'); Hub.refresh(); }; };
+ACT['hub.igconnect'] = async el => { const token = hv('igtok'); if (!token) return UI.toast('Cole o token', 'err'); const j = await busyBtn(el, 'Conectando…', () => Hub.call('ig.connect', {token})); UI.toast(`Instagram @${j.username} conectado · ${intf(j.followers || 0)} seguidores ✓`); IG.at = 0; Hub.refresh(); };
+ACT['hub.igdis'] = async () => { if (!await UI.confirm('Desconectar o Instagram?', 'As medições já salvas continuam. Para conectar de novo, gere outro token no painel da Meta.', 'Desconectar', true)) return; await Hub.call('ig.disconnect'); Hub.refresh(); };
+ACT['hub.adsconnect'] = async el => { const token = hv('adstok'); if (!token) return UI.toast('Cole o token', 'err'); const j = await busyBtn(el, 'Conectando…', () => Hub.call('ads.connect', {token})); await Hub.status(true); AdsPull.pick(j.accounts || []); };
+ACT['hub.adsacc'] = async () => { const j = await Hub.call('ads.accounts'); AdsPull.pick(j.accounts || []); };
+ACT['hub.adsdis'] = async () => { if (!await UI.confirm('Desconectar o Meta Ads?', 'Os relatórios já salvos continuam.', 'Desconectar', true)) return; await Hub.call('ads.disconnect'); Hub.refresh(); };
+AdsPull.pick = accs => { if (!accs.length) { UI.toast('Esse token não enxerga nenhuma conta de anúncios. Confira o passo “Atribuir ativos”.', 'err'); return Hub.refresh(); }
+  const m = UI.open({kind: 'dialog', title: 'Qual conta de anúncios?', body: `<div class="list">${accs.map((a, i) => `<button class="lrow click" data-i="${i}" style="width:100%;text-align:left"><div class="main-col"><strong>${esc(a.name || a.id)}</strong><div class="tiny muted">${esc(a.id)} · ${esc(a.currency || '')} · ${a.account_status === 1 ? 'ativa' : 'status ' + a.account_status}</div></div></button>`).join('')}</div>`});
+  $$('[data-i]', m.el).forEach(b => b.onclick = async () => { const a = accs[num(b.dataset.i)]; await Hub.call('ads.pick', {id: a.id, name: a.name}); m.close(); UI.toast('Conta escolhida: ' + a.name); Hub.refresh(); }); };
+ACT['hub.tgconnect'] = async el => { const token = hv('tgtok'); if (!token) return UI.toast('Cole o token do bot', 'err'); const j = await busyBtn(el, 'Conectando…', () => Hub.call('tg.connect', {token})); UI.toast(`Bot @${j.bot} conectado. Agora mande “oi” para ele no Telegram.`); window.open('https://t.me/' + j.bot, '_blank', 'noopener'); Hub.refresh(); };
+ACT['hub.tglink'] = async el => { const j = await busyBtn(el, 'Procurando…', () => Hub.call('tg.link')); UI.toast(`Pronto${j.name ? ', ' + j.name : ''}! Confira a mensagem no Telegram.`); Hub.refresh(); };
+ACT['hub.tgdis'] = async () => { await Hub.call('tg.disconnect'); Hub.refresh(); };
+ACT['hub.nsave'] = async () => { const f = $('#nf'); const prefs = {channel: f.channel.value, sales: f.sales.checked, leads: f.leads.checked, morning: f.morning.checked, weekly: f.weekly.checked}; await Hub.call('notify.prefs', {prefs}); UI.toast('Preferências salvas'); Hub.refresh(); };
+ACT['hub.ntest'] = async el => { const j = await busyBtn(el, 'Enviando…', () => Hub.call('notify.test')); UI.toast(j.ok ? 'Enviado por ' + j.via.join(' e ') : 'Nada foi enviado: conecte o Telegram ou o Google', j.ok ? '' : 'err'); };
+ACT['hub.run'] = async (el, e, d) => { const j = await busyBtn(el, 'Rodando…', () => Hub.call('run', {job: d.job})); const err = j.error || j.instagram?.erro || j.ads?.erro; UI.toast(err ? 'Atenção: ' + err : 'Feito ✓', err ? 'err' : ''); if (d.job === 'metrics') IG.at = 0; Hub.refresh(); };
+ACT['hub.ltok'] = async () => { if (!await UI.confirm('Gerar um token novo?', 'O link do ManyChat muda: você vai precisar colar o endereço novo em todos os fluxos que usam a Solicitação externa. O formulário público não é afetado.', 'Gerar novo')) return; await Hub.call('lead.rotate'); Hub.refresh(); };
+ACT['hub.form'] = () => { const f = Hub.st.form || {title: 'Quero saber mais', sub: 'Deixe seus dados que eu (ou minha equipe) chamo você no WhatsApp.', fields: ['name', 'phone', 'email', 'instagram', 'interest'], thanks: 'Recebido! Em breve a gente fala com você no WhatsApp 💛', button: 'Quero participar', origin: 'Site / página', interests: col('products').filter(p => p.name).slice(0, 6).map(p => p.name).concat(col('plans').filter(p => p.name).slice(0, 3).map(p => p.name))};
+  const FL = [['name', 'Nome'], ['phone', 'WhatsApp'], ['email', 'E-mail'], ['instagram', '@ do Instagram'], ['interest', 'Interesse (lista abaixo)'], ['moment', 'Momento atual (texto curto)'], ['income', 'Faixa de faturamento'], ['message', 'Mensagem livre']];
+  const m = UI.open({title: 'Formulário de captação', size: 'wide', body: `<form class="form" id="ff"><label class="field wide">Título<input name="title" value="${esc(f.title)}"></label><label class="field wide">Texto de apoio<textarea name="sub" rows="2">${esc(f.sub)}</textarea></label><div class="field wide"><span>Campos</span><div class="chips">${FL.map(([k, l]) => `<label class="chip ${f.fields.includes(k) ? 'on' : ''}"><input type="checkbox" name="fl" value="${k}" ${f.fields.includes(k) ? 'checked' : ''}> ${l}</label>`).join('')}</div></div><label class="field wide">Opções de interesse (uma por linha)<textarea name="interests" rows="4">${esc((f.interests || []).join('\n'))}</textarea></label><label class="field">Texto do botão<input name="button" value="${esc(f.button || 'Quero participar')}"></label><label class="field">Origem no CRM<select name="origin">${OPT.leadOrigin.map(o => `<option ${o === f.origin ? 'selected' : ''}>${o}</option>`).join('')}</select></label><label class="field">Campanha padrão<input name="campaign" value="${esc(f.campaign || '')}" placeholder="Ex.: bio, aula gratuita"></label><label class="field">Seu WhatsApp (botão depois do envio, opcional)<input name="whatsapp" value="${esc(f.whatsapp || '')}" placeholder="5511999999999"></label><label class="field wide">Mensagem de agradecimento<textarea name="thanks" rows="2">${esc(f.thanks)}</textarea></label><label class="field wide">Mandar para outra página depois (opcional)<input name="redirect" value="${esc(f.redirect || '')}" placeholder="https://…"></label></form>`, foot: `<button class="btn" data-close>Cancelar</button><button class="btn primary" data-save>Salvar e publicar</button>`});
+  $('[data-save]', m.el).onclick = async () => { const x = $('#ff', m.el); const form = {title: x.title.value, sub: x.sub.value, fields: $$('input[name=fl]:checked', m.el).map(i => i.value), interests: x.interests.value.split('\n').map(s => s.trim()).filter(Boolean), button: x.button.value, origin: x.origin.value, campaign: x.campaign.value, whatsapp: x.whatsapp.value, thanks: x.thanks.value, redirect: x.redirect.value.trim()};
+    if (!form.fields.includes('phone') && !form.fields.includes('email') && !form.fields.includes('instagram')) return UI.toast('Inclua pelo menos um contato (WhatsApp, e-mail ou @)', 'err'); await Hub.call('form.save', {form}); m.close(); UI.toast('Formulário publicado ✓'); Hub.refresh(); }; };
+
+/* ---------- ativação passo a passo: troca o passo antigo do Google pelos novos ---------- */
+const _steps20 = Setup.steps;
+Setup.steps = () => { const st = Hub.st || {}; const list = _steps20().filter(s => s[0] !== 'google'); const at = list.findIndex(s => s[0] === 'ai'); const go = `${H.btn('Abrir Conexões', 'nav', {cls: 'sm', args: {to: '#/hub/connect'}})}`;
+  list.splice(at < 0 ? list.length : at, 0,
+    ['google', '10. Google Agenda e Drive ao vivo', !!st.google, 'grátis', ['Em <b>Integrações › Conexões</b>, copie o script e cole em script.google.com (5 minutos, uma vez só).', 'Sua agenda aparece no Calendário geral e qualquer data da WL vira evento no Google com um clique.', 'Mentoradas, produtos e ações ganham pasta própria no Drive, e o backup diário vai para lá.', go]],
+    ['notify', '11. Avisos no celular', !!(st.telegram || (st.google && st.notify?.channel !== 'telegram')), 'grátis', ['Crie um bot no Telegram com o @BotFather e cole o token em Conexões.', 'Venda aprovada, lead novo, resumo das 07:00 e resumo da semana chegam no celular.', go]],
+    ['instagram', '12. Instagram automático', !!st.instagram, 'grátis (API oficial, só leitura)', ['App gratuito no painel da Meta (modo de desenvolvimento serve) e token da sua conta profissional.', 'Seguidores, alcance e números de cada post entram sozinhos todo dia.', go]],
+    ['ads', '13. Meta Ads sem CSV', !!(st.ads && st.ads_account), 'grátis (só leitura)', ['Usuário do sistema com permissão <b>ads_read</b> no seu Portfólio Empresarial.', 'Em Gestão de Tráfego, um clique puxa os números do período e abre a análise.', go]],
+    ['leads', '14. Formulário e ManyChat no CRM', !!st.form, 'grátis', ['Crie o formulário em Conexões e use o link na bio, nos stories e nos anúncios.', 'No ManyChat, a Solicitação externa manda cada contato direto para o CRM.', go]]);
+  return list; };
+
+/* ---------- partida ---------- */
+const _after20 = App.after16;
+App.after16 = (...a) => { const r = _after20 ? _after20(...a) : undefined; if (Cloud.on() && Auth.user) { AutoInbox.start(); Hub.need(); } return r; };
+setTimeout(() => { if (Cloud.on() && Auth.user) { AutoInbox.start(); Hub.status().then(() => App.render()); } }, 2500);
+
 /* WL V13 · inicialização */
 (function boot() {
   Store.load(); window.db = db;
@@ -5074,7 +5330,7 @@ NAV.hub.tabs.unshift(['setup', 'Ativação (passo a passo)']);
 Auth.start(() => App.render());
   Files.migrateLegacy().then(n => { if (n) UI.toast(`${n} anexo(s) da versão anterior trazidos para a V13`); }).catch(() => {});
   if (db.meta.migratedFrom && !db.meta.migrationShown && Auth.user) { db.meta.migrationShown = true; Store.save(); const counts = Object.entries(Schema.C).map(([k, C]) => [C.plural, col(k).length]).filter(([, n]) => n); setTimeout(() => UI.open({kind: 'dialog', title: 'Seus dados da V12 foram trazidos ✓', body: `<p>Encontrei o banco das versões anteriores neste navegador e copiei tudo para a V13, sem apagar o original.</p><div class="grid narrow">${counts.map(([n, v]) => H.stat(n, intf(v))).join('') || '<span class="muted">(o banco antigo estava vazio)</span>'}</div><p class="muted small" style="margin-top:12px">Checklists em texto viraram listas marcáveis, encontros viraram uma lista com datas, mapas mentais e automações viraram desenhos editáveis, e cada ação do mês ganhou seu próprio quadro Kanban.</p>`, foot: '<button class="btn primary" data-close>Começar</button>'}), 400); }
-  window.WL_TEST = {Del, Team, Academy, Dates, ChangeLog, Routine, Record, Links, CalAll, TeamPlan, Dreams, ContentLib, Strat, Traffic, Wealth, Rules, Strategies, Leads, Templates, Portal, AI, Kiwify, Recur, Auth, Users, db: () => db, Store, Data, Boards, Canvas, App, Migrate, Fin, Goals, Mentor, Routine, Cloud, Search, Notices, Kanban, Backup, Files, CSV, Personal, Diag};
+  window.WL_TEST = {Hub, IG, GLive, AdsPull, LeadIn, get, today, Del, Team, Academy, Dates, ChangeLog, Routine, Record, Links, CalAll, TeamPlan, Dreams, ContentLib, Strat, Traffic, Wealth, Rules, Strategies, Leads, Templates, Portal, AI, Kiwify, Recur, Auth, Users, db: () => db, Store, Data, Boards, Canvas, App, Migrate, Fin, Goals, Mentor, Routine, Cloud, Search, Notices, Kanban, Backup, Files, CSV, Personal, Diag};
 })();
 </script>
 </body>

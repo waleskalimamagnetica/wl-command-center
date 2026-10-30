@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadastro</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f3ee;--panel:#fff;--ink:#1f1c18;--mute:#7b7368;--stroke:#e5ddd0;--gold:#a47a35;--gold2:#c9a05a;--goldbg:#f6ecdb;--err:#b3261e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0a09;--panel:#161412;--ink:#f3ecdf;--mute:#a59c8e;--stroke:#2c2721;--gold:#e2b768;--gold2:#c79a4f;--goldbg:#2b2217;--err:#f2b8b5}}
+:root[data-theme="dark"]{--bg:#0b0a09;--panel:#161412;--ink:#f3ecdf;--mute:#a59c8e;--stroke:#2c2721;--gold:#e2b768;--gold2:#c79a4f;--goldbg:#2b2217;--err:#f2b8b5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px}
+.card{width:100%;max-width:480px;background:var(--panel);border:1px solid var(--stroke);border-radius:20px;padding:32px 26px;box-shadow:0 18px 50px rgba(0,0,0,.06)}
+.kicker{color:var(--gold);font-size:11px;letter-spacing:2.4px;font-weight:600;text-transform:uppercase;margin:0 0 10px}
+h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:34px;line-height:1.1;margin:0 0 10px}
+p.sub{color:var(--mute);margin:0 0 22px}
+label{display:block;font-size:13px;font-weight:600;margin:0 0 14px}
+input,select,textarea{display:block;width:100%;margin-top:6px;padding:13px 14px;border-radius:12px;border:1px solid var(--stroke);background:var(--bg);color:var(--ink);font:inherit;font-weight:400}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold2);outline-offset:1px;border-color:transparent}
+textarea{min-height:90px;resize:vertical}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+button{width:100%;margin-top:6px;padding:15px;border:0;border-radius:999px;background:var(--gold);color:#fff;font:600 16px Inter,sans-serif;cursor:pointer;transition:transform .15s,opacity .15s}
+button:hover{transform:translateY(-1px)}button:disabled{opacity:.6;cursor:wait;transform:none}
+.err{color:var(--err);font-size:14px;margin:10px 0 0;min-height:1em}
+.ok{text-align:center;padding:10px 0}.ok .big{font-size:44px;margin-bottom:6px}
+.wa{display:inline-block;margin-top:16px;padding:13px 22px;border-radius:999px;background:#25d366;color:#06361b;font-weight:600;text-decoration:none}
+.legal{color:var(--mute);font-size:12px;margin-top:16px;text-align:center}
+.load{color:var(--mute);text-align:center}
+</style>
+</head>
+<body>
+<main class="card" id="app"><p class="load">Carregando…</p></main>
+<script>
+(function () {
+  var API = 'https://eevjvysitwoxslpkotlr.supabase.co/functions/v1/wl-lead';
+  var app = document.getElementById('app'); var t0 = Date.now(); var q = new URLSearchParams(location.search);
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  var LABEL = {name: ['Seu nome', 'text', 'name'], phone: ['WhatsApp com DDD', 'tel', 'tel'], email: ['E-mail', 'email', 'email'], instagram: ['Seu @ no Instagram', 'text', 'off'], moment: ['Em que momento você está hoje?', 'text', 'off'], income: ['Quanto você fatura por mês hoje?', 'select', 'off'], message: ['Quer contar algo?', 'textarea', 'off']};
+  var INCOME = ['Ainda não faturo', 'Até R$ 2 mil', 'R$ 2 a 5 mil', 'R$ 5 a 10 mil', 'Acima de R$ 10 mil'];
+  fetch(API).then(function (r) { return r.json(); }).then(function (j) {
+    var f = j.form; if (!f) { app.innerHTML = '<p class="load">Formulário indisponível no momento.</p>'; return; }
+    document.title = f.title || 'Cadastro';
+    var h = '<h1>' + esc(f.title) + '</h1>' + (f.sub ? '<p class="sub">' + esc(f.sub) + '</p>' : '') + '<form id="f" novalidate>';
+    (f.fields || []).forEach(function (k) {
+      if (k === 'interest') { if ((f.interests || []).length) h += '<label>Tenho interesse em<select name="interest" required><option value="">Escolha uma opção</option>' + f.interests.map(function (i) { return '<option>' + esc(i) + '</option>'; }).join('') + '</select></label>'; return; }
+      var L = LABEL[k]; if (!L) return;
+      if (L[1] === 'textarea') h += '<label>' + L[0] + '<textarea name="' + k + '"></textarea></label>';
+      else if (L[1] === 'select') h += '<label>' + L[0] + '<select name="' + k + '"><option value="">Escolha</option>' + INCOME.map(function (i) { return '<option>' + i + '</option>'; }).join('') + '</select></label>';
+      else h += '<label>' + L[0] + '<input name="' + k + '" type="' + L[1] + '" autocomplete="' + L[2] + '"' + (k === 'name' ? ' required' : '') + (k === 'instagram' ? ' placeholder="@seuperfil"' : '') + (k === 'phone' ? ' inputmode="tel" placeholder="(11) 99999-9999"' : '') + '></label>';
+    });
+    h += '<div class="hp" aria-hidden="true"><label>Site<input name="website" tabindex="-1" autocomplete="off"></label></div><button id="go">' + esc(f.button || 'Enviar') + '</button><p class="err" id="err" role="alert"></p></form><p class="legal">Seus dados são usados só para entrarmos em contato com você.</p>';
+    app.innerHTML = h;
+    var form = document.getElementById('f');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault(); var err = document.getElementById('err'); err.textContent = '';
+      var d = {}; new FormData(form).forEach(function (v, k) { d[k] = String(v).trim(); });
+      if ((f.fields || []).indexOf('name') > -1 && !d.name) { err.textContent = 'Escreva seu nome, por favor.'; return; }
+      if (!d.phone && !d.email && !d.instagram) { err.textContent = 'Deixe pelo menos um jeito de falarmos com você.'; return; }
+      if (d.phone && d.phone.replace(/\D/g, '').length < 10) { err.textContent = 'Confira o WhatsApp com DDD.'; return; }
+      if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) { err.textContent = 'Confira o e-mail.'; return; }
+      if (form.interest && !d.interest) { err.textContent = 'Escolha o seu interesse.'; return; }
+      var utm = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].map(function (k) { return q.get(k) ? k.slice(4) + '=' + q.get(k) : ''; }).filter(Boolean).join(' · ');
+      d.t0 = t0; d.origin = f.origin; d.campaign = q.get('c') || q.get('utm_campaign') || f.campaign || ''; d.page = location.href.split('?')[0]; d.utm = utm;
+      var b = document.getElementById('go'); b.disabled = true; b.textContent = 'Enviando…';
+      fetch(API, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d)}).then(function (r) { return r.json().then(function (x) { return [r.ok, x]; }); }).then(function (res) {
+        if (!res[0] || res[1].error) throw new Error(res[1].error || 'Erro');
+        if (f.redirect) { location.href = f.redirect; return; }
+        app.innerHTML = '<div class="ok"><div class="big">💛</div><h1>Recebido!</h1><p class="sub">' + esc(f.thanks || 'Em breve falamos com você.') + '</p>' + (f.whatsapp ? '<a class="wa" href="https://wa.me/' + esc(f.whatsapp) + '?text=' + encodeURIComponent('Oi! Acabei de me cadastrar: ' + (d.name || '')) + '" target="_blank" rel="noopener">Falar no WhatsApp agora</a>' : '') + '</div>';
+      }).catch(function (x) { b.disabled = false; b.textContent = f.button || 'Enviar'; err.textContent = x.message === 'Erro' ? 'Não foi possível enviar agora. Tente de novo em instantes.' : x.message; });
+    });
+  }).catch(function () { app.innerHTML = '<p class="load">Não foi possível carregar. Atualize a página.</p>'; });
+})();
+</script>
+</body>
+</html>
