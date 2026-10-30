@@ -502,9 +502,9 @@ tr.on td{background:var(--goldbg)}
 </div>
 <script>/* WL Command Center V13 · núcleo: utilidades, armazenamento, migração, arquivos, interface base */
 'use strict';
-const WL = window.WL = {version: '19.0', build: '2026-10-29 10:12'};
+const WL = window.WL = {version: '19.0', build: '2026-10-30 11:56'};
 // arquivo da equipe: o endereço público do Supabase pode vir gravado aqui (nunca senhas nem a chave service_role)
-const WL_PRECONFIG = /*WLPRECFG*/{"url": "https://eevjvysitwoxslpkotlr.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldmp2eXNpdHdveHNscGtvdGxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNjY3NDgsImV4cCI6MjEwODk0Mjc0OH0.hyiwmA2-M-xsUPv0ogOxV3r6wK5cwJnwI7T1S8TSLu0", "ownerId": ""}/*WLPRECFG*/;
+const WL_PRECONFIG = /*WLPRECFG*/{"url": "https://eevjvysitwoxslpkotlr.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldmp2eXNpdHdveHNscGtvdGxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNjY3NDgsImV4cCI6MjEwODk0Mjc0OH0.hyiwmA2-M-xsUPv0ogOxV3r6wK5cwJnwI7T1S8TSLu0", "ownerId": "f6b51022-5856-4996-8acd-bbfabb2d9ae1"}/*WLPRECFG*/;
 try { WL.srcHTML = '<!doctype html>\n' + document.documentElement.outerHTML; } catch (e) {}
 
 /* ---------- utilidades ---------- */
@@ -3077,11 +3077,11 @@ const Auth = {
       $('#cpcode', m).onclick = () => UI.copy(code); $('#goin', m).onclick = () => Auth.enter(u, true); };
   },
   screenLogin(msg = '') {
-    const c = Cloud.cfg();
-    const el = Auth.frame(`<h2>Entrar</h2>${msg ? `<div class="alert small" style="margin-bottom:10px">${msg}</div>` : ''}<div class="seg" style="margin-bottom:14px">${Auth.users().length ? `<button class="${db.settings.loginMode !== 'cloud' ? 'active' : ''}" data-act="auth.mode" data-m="local">Neste computador</button>` : ''}<button class="${db.settings.loginMode === 'cloud' || !Auth.users().length ? 'active' : ''}" data-act="auth.mode" data-m="cloud">☁ Conta na nuvem</button></div>
-      <form class="form" id="loginf" style="grid-template-columns:1fr">${db.settings.loginMode === 'cloud' || !Auth.users().length ? `<label class="field">Endereço do projeto Supabase<input name="url" value="${esc(c.url || '')}" placeholder="https://xxxx.supabase.co"></label><label class="field">Chave pública (anon)<input name="key" value="${esc(c.key || '')}"></label>` : ''}
+    const c = Cloud.cfg(); const pre = typeof WL_PRECONFIG !== 'undefined' && WL_PRECONFIG?.url; if (pre) db.settings.loginMode = 'cloud';
+    const el = Auth.frame(`<h2>Entrar</h2>${msg ? `<div class="alert small" style="margin-bottom:10px">${msg}</div>` : ''}<div class="seg" style="margin-bottom:14px;${pre ? 'display:none' : ''}">${Auth.users().length ? `<button class="${db.settings.loginMode !== 'cloud' ? 'active' : ''}" data-act="auth.mode" data-m="local">Neste computador</button>` : ''}<button class="${db.settings.loginMode === 'cloud' || !Auth.users().length ? 'active' : ''}" data-act="auth.mode" data-m="cloud">☁ Conta na nuvem</button></div>
+      <form class="form" id="loginf" style="grid-template-columns:1fr">${db.settings.loginMode === 'cloud' || !Auth.users().length ? (pre ? `<input type="hidden" name="url" value="${esc(c.url || WL_PRECONFIG.url)}"><input type="hidden" name="key" value="${esc(c.key || WL_PRECONFIG.key)}">` : `<label class="field">Endereço do projeto Supabase<input name="url" value="${esc(c.url || '')}" placeholder="https://xxxx.supabase.co"></label><label class="field">Chave pública (anon)<input name="key" value="${esc(c.key || '')}"></label>`) : ''}
       <label class="field">E-mail<input name="email" type="email" required autocomplete="username" value="${esc(localStorage.getItem('wl_last_email') || '')}"></label><label class="field">Senha<input name="pass" type="password" required autocomplete="current-password"></label><label class="chip" style="width:fit-content"><input type="checkbox" name="remember" checked> Manter conectada neste computador (14 dias)</label><button class="btn primary" style="justify-content:center">Entrar</button></form>
-      <div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn ghost sm" data-act="auth.forgot">Esqueci minha senha</button>${!Auth.users().length ? `<button class="btn ghost sm" data-act="auth.setup">Criar acesso local</button>` : ''}</div><p class="tiny muted" style="margin-top:14px">🔒 Depois de 5 tentativas erradas o acesso fica bloqueado por 5 minutos.</p>`);
+      <div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn ghost sm" data-act="auth.forgot">Esqueci minha senha</button>${!Auth.users().length && !pre ? `<button class="btn ghost sm" data-act="auth.setup">Criar acesso local</button>` : ''}</div><p class="tiny muted" style="margin-top:14px">🔒 Depois de 5 tentativas erradas o acesso fica bloqueado por 5 minutos.</p>`);
     const f = $('#loginf', el); setTimeout(() => (f.email.value ? f.pass : f.email).focus(), 50);
     f.onsubmit = async e => { e.preventDefault(); const email = f.email.value.trim().toLowerCase(); localStorage.setItem('wl_last_email', email);
       try { if (f.url) await Auth.cloudLogin(f.url.value.trim(), f.key.value.trim(), email, f.pass.value, f.remember.checked); else await Auth.localLogin(email, f.pass.value, f.remember.checked); } catch (err) { UI.toast(err.message, 'err'); f.pass.value = ''; f.pass.focus(); } };
