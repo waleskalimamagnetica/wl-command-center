@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Central Magnética · Mentoria Escala Inteligente</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f3ee;--panel:#fff;--panel2:#faf7f2;--ink:#1f1c18;--mute:#766e62;--stroke:#e7dfd2;--gold:#9c7330;--gold2:#c9a05a;--goldbg:#f6ecdb;--ok:#2f7d4f;--okbg:#e3f3e8;--warn:#a5650c;--warnbg:#fbefd9;--err:#b3261e;--errbg:#fbe4e2;--side:#121110;--sideink:#efe6d6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0c0b;--panel:#171513;--panel2:#1d1a17;--ink:#f3ecdf;--mute:#a59c8e;--stroke:#2d2822;--gold:#e2b768;--gold2:#c79a4f;--goldbg:#2b2217;--ok:#8fd4a8;--okbg:#14261b;--warn:#f0c27a;--warnbg:#2c2213;--err:#f2b8b5;--errbg:#2e1716;--side:#090807}}
+:root[data-theme="dark"]{--bg:#0d0c0b;--panel:#171513;--panel2:#1d1a17;--ink:#f3ecdf;--mute:#a59c8e;--stroke:#2d2822;--gold:#e2b768;--gold2:#c79a4f;--goldbg:#2b2217;--ok:#8fd4a8;--okbg:#14261b;--warn:#f0c27a;--warnbg:#2c2213;--err:#f2b8b5;--errbg:#2e1716;--side:#090807}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15.5px/1.6 Inter,system-ui,sans-serif}
+a{color:var(--gold)}
+.serif{font-family:"Cormorant Garamond",Georgia,serif}
+button{font:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;border-radius:999px;padding:9px 16px;border:1px solid var(--stroke);background:var(--panel);color:var(--ink);text-decoration:none}
+.btn.p{background:linear-gradient(90deg,var(--gold),var(--gold2));border:0;color:#1a1408}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn:disabled{opacity:.6;cursor:wait}
+input,textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--stroke);border-radius:12px;padding:11px 13px;outline:none}
+textarea{min-height:90px;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--gold2)}
+label.f{display:block;font-weight:600;font-size:14px;margin:0 0 12px}label.f>span{display:block;margin-bottom:5px}
+/* login */
+.auth{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(120% 90% at 50% 0%,#2a241a 0%,#0e0d0b 65%)}
+.auth .box{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--stroke);border-radius:22px;padding:30px 26px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.auth .k{letter-spacing:.38em;font-size:11px;color:var(--gold);margin:0;text-align:center}
+.auth h1{font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;margin:4px 0 2px;text-align:center;line-height:1.1}
+.auth p.s{color:var(--mute);text-align:center;margin:0 0 22px;font-size:14px}
+.msg{border-radius:12px;padding:10px 12px;margin:0 0 14px;font-size:14px;display:none}.msg.err{display:block;background:var(--errbg);color:var(--err)}.msg.ok{display:block;background:var(--okbg);color:var(--ok)}
+/* app */
+.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+.side{background:var(--side);color:var(--sideink);padding:22px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{padding:0 8px 18px;border-bottom:1px solid #2a2520;margin-bottom:12px}.brand .k{letter-spacing:.32em;font-size:10px;color:#d9b46c}.brand b{display:block;font-family:"Cormorant Garamond",Georgia,serif;font-size:24px;line-height:1.1;color:#f3ecdf}
+.nav button{display:flex;width:100%;align-items:center;gap:10px;background:none;border:0;color:var(--sideink);opacity:.82;padding:9px 10px;border-radius:10px;text-align:left;font-size:14.5px}
+.nav button.on{background:#2a2219;color:#e2b768;opacity:1}.nav button:hover{opacity:1}
+.nav .ic{width:22px;text-align:center}.nav .bd{margin-left:auto;background:#e2b768;color:#1a1408;border-radius:99px;font-size:11px;padding:0 7px;font-weight:700}
+.side .foot{margin-top:18px;padding:12px 10px;border-top:1px solid #2a2520;font-size:12.5px;opacity:.8}
+.main{padding:28px 32px 80px;max-width:1080px;width:100%}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:20px}
+.top h2{font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;margin:0;line-height:1.1}
+.top .s{color:var(--mute);margin:4px 0 0}
+.card{background:var(--panel);border:1px solid var(--stroke);border-radius:18px;padding:20px;margin-bottom:16px}
+.card h3{margin:0 0 12px;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stat{background:var(--panel);border:1px solid var(--stroke);border-radius:16px;padding:16px}.stat .l{color:var(--mute);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em}.stat .v{font-size:26px;font-weight:700;margin-top:4px}.stat .x{color:var(--mute);font-size:13px}
+.bar{height:9px;background:var(--stroke);border-radius:9px;overflow:hidden;margin:8px 0 4px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.hero{background:radial-gradient(120% 140% at 0% 0%,#2a241a 0%,#0e0d0b 70%);color:#f3ecdf;border-radius:20px;padding:24px;margin-bottom:16px;border:0}
+.hero .k{letter-spacing:.24em;font-size:11px;color:#d9b46c;text-transform:uppercase}.hero h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;margin:4px 0 6px}.hero p{color:#d6ccba;margin:0}
+.list .it{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--stroke)}.list .it:last-child{border:0}
+.chk{width:22px;height:22px;flex:none;accent-color:var(--gold);margin-top:2px}
+.tag{display:inline-block;font-size:12px;font-weight:600;border-radius:99px;padding:2px 9px;background:var(--panel2);border:1px solid var(--stroke);white-space:nowrap}
+.tag.todo{color:var(--mute)}.tag.doing{background:#efe4f8;color:#7a3fb0;border-color:#e2d0f2}.tag.review{background:var(--warnbg);color:var(--warn);border-color:transparent}.tag.adjust{background:var(--errbg);color:var(--err);border-color:transparent}.tag.done{background:var(--okbg);color:var(--ok);border-color:transparent}
+.tag.alta{background:var(--errbg);color:var(--err);border-color:transparent}.tag.media{background:var(--warnbg);color:var(--warn);border-color:transparent}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.doing{background:#2a1c36;color:#d3a8f5;border-color:transparent}}
+.muted{color:var(--mute)}.small{font-size:13.5px}.tiny{font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.grow{flex:1}
+.pre{white-space:pre-wrap}
+.task{border:1px solid var(--stroke);border-radius:14px;padding:14px;margin-bottom:10px;background:var(--panel)}
+.task .t{font-weight:600}
+.empty{color:var(--mute);text-align:center;padding:26px 10px}
+.kan{display:grid;grid-template-columns:repeat(5,minmax(200px,1fr));gap:10px;overflow:auto;padding-bottom:6px}
+.kan .col{background:var(--panel2);border:1px solid var(--stroke);border-radius:14px;padding:10px;min-height:120px}.kan .col h4{margin:2px 4px 10px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+.seg{display:inline-flex;border:1px solid var(--stroke);border-radius:99px;overflow:hidden}.seg button{border:0;background:none;padding:6px 12px;font-size:13px;color:var(--mute)}.seg button.on{background:var(--goldbg);color:var(--gold);font-weight:600}
+.thread{border-left:3px solid var(--gold2);padding:6px 0 6px 12px;margin-top:10px}
+.mtop{display:none}
+@media (max-width:860px){.app{grid-template-columns:1fr}.side{position:fixed;inset:0 30% 0 0;z-index:30;transform:translateX(-105%);transition:transform .2s;height:100%}.side.open{transform:none}.mtop{display:flex;position:sticky;top:0;z-index:20;background:var(--side);color:var(--sideink);padding:12px 16px;align-items:center;gap:12px}.mtop b{font-family:"Cormorant Garamond",Georgia,serif;font-size:20px}.mtop button{background:none;border:0;color:var(--sideink);font-size:22px}.main{padding:18px 16px 80px}.top h2{font-size:28px}.kan{grid-template-columns:repeat(5,82%)}}
+.shade{display:none}@media (max-width:860px){.shade.on{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:25}}
+</style>
+</head>
+<body>
+<div id="root"><div class="auth"><div class="box"><p class="k">CENTRAL</p><h1>Magnética</h1><p class="s">Carregando…</p></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function () {
+  var CFG = /*WLCENTRALCFG*/{"url": "https://eevjvysitwoxslpkotlr.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldmp2eXNpdHdveHNscGtvdGxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNjY3NDgsImV4cCI6MjEwODk0Mjc0OH0.hyiwmA2-M-xsUPv0ogOxV3r6wK5cwJnwI7T1S8TSLu0"}/*WLCENTRALCFG*/;
+  var FN = CFG.url + '/functions/v1/wl-central';
+  var sb = window.supabase && CFG.key ? window.supabase.createClient(CFG.url, CFG.key, {auth: {persistSession: true, storageKey: 'wl-central-auth'}}) : null;
+  var S = {row: null, c: {}, st: {}, view: 'home', kanban: false, saveT: 0};
+  var root = document.getElementById('root');
+  var Q = new URLSearchParams(location.search);
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]; }); }
+  function lnk(s) { return esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function br(iso) { if (!iso) return ''; var p = String(iso).slice(0, 10).split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+  function money(v) { return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  function safeUrl(u) { u = String(u || '').trim(); return /^https?:\/\//i.test(u) ? u : ''; }
+  var ST = [['todo', 'A fazer'], ['doing', 'Em andamento'], ['review', 'Em revisão'], ['adjust', 'Ajustes'], ['done', 'Concluído']];
+  var STL = {}; ST.forEach(function (x) { STL[x[0]] = x[1]; });
+
+  /* ---------- telas de acesso ---------- */
+  function authBox(inner) { root.innerHTML = '<div class="auth"><div class="box"><p class="k">CENTRAL</p><h1>Magnética</h1>' + inner + '</div></div>'; }
+  function showLogin(msg, ok) {
+    authBox('<p class="s">Mentoria Escala Inteligente</p><div class="msg ' + (msg ? (ok ? 'ok' : 'err') : '') + '" id="m">' + esc(msg || '') + '</div><form id="lf"><label class="f"><span>E-mail</span><input type="email" name="e" autocomplete="username" required></label><label class="f"><span>Senha</span><input type="password" name="p" autocomplete="current-password" required></label><button class="btn p" style="width:100%;justify-content:center;padding:12px">Entrar</button></form><p class="tiny muted" style="text-align:center;margin:16px 0 0">Esqueceu a senha ou ainda não tem? Peça o seu link de acesso para a sua mentora no grupo.</p>');
+    document.getElementById('lf').onsubmit = function (e) { e.preventDefault(); var f = e.target, b = f.querySelector('button'); b.disabled = true; b.textContent = 'Entrando…';
+      sb.auth.signInWithPassword({email: f.e.value.trim().toLowerCase(), password: f.p.value}).then(function (r) { if (r.error) throw r.error; return boot(); }).catch(function (err) { b.disabled = false; b.textContent = 'Entrar'; var m = document.getElementById('m'); m.className = 'msg err'; m.textContent = /invalid/i.test(err.message) ? 'E-mail ou senha incorretos.' : err.message; }); };
+  }
+  function showFirst(t) {
+    authBox('<p class="s">Carregando o seu acesso…</p>');
+    fetch(FN + '?t=' + encodeURIComponent(t)).then(function (r) { return r.json(); }).then(function (j) {
+      if (j.error) { history.replaceState(null, '', location.pathname); return showLogin(j.error); }
+      authBox('<p class="s">Olá' + (j.first ? ', ' + esc(j.first) : '') + '! Crie a sua senha para entrar na sua central.</p><div class="msg" id="m"></div><form id="ff"><label class="f"><span>Seu e-mail de acesso</span><input value="' + esc(j.email) + '" readonly></label><label class="f"><span>Crie uma senha (mínimo 8 caracteres)</span><input type="password" name="p" minlength="8" autocomplete="new-password" required></label><label class="f"><span>Repita a senha</span><input type="password" name="p2" autocomplete="new-password" required></label><button class="btn p" style="width:100%;justify-content:center;padding:12px">Criar senha e entrar</button></form>');
+      document.getElementById('ff').onsubmit = function (e) { e.preventDefault(); var f = e.target, m = document.getElementById('m'), b = f.querySelector('button');
+        if (f.p.value.length < 8) { m.className = 'msg err'; m.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
+        if (f.p.value !== f.p2.value) { m.className = 'msg err'; m.textContent = 'As senhas não são iguais.'; return; }
+        b.disabled = true; b.textContent = 'Criando…';
+        fetch(FN, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({t: t, password: f.p.value})}).then(function (r) { return r.json(); }).then(function (x) {
+          if (x.error) throw new Error(x.error); history.replaceState(null, '', location.pathname);
+          return sb.auth.signInWithPassword({email: x.email, password: f.p.value}).then(function (r) { if (r.error) throw r.error; return boot(); });
+        }).catch(function (err) { b.disabled = false; b.textContent = 'Criar senha e entrar'; m.className = 'msg err'; m.textContent = err.message; }); };
+    }).catch(function () { showLogin('Sem conexão. Tente de novo.'); });
+  }
+
+  /* ---------- dados ---------- */
+  function load() { return sb.from('wl_portal').select('id,content,student,status,content_at').maybeSingle().then(function (r) { if (r.error) throw r.error; return r.data; }); }
+  function boot() {
+    return sb.auth.getSession().then(function (s) {
+      if (!s.data.session) return showLogin();
+      return load().then(function (row) {
+        if (!row) { sb.auth.signOut(); return showLogin('Seu acesso ainda não foi liberado. Fale com a sua mentora.'); }
+        S.row = row; S.c = row.content || {}; S.st = row.student || {}; ['steps', 'tasks', 'reads'].forEach(function (k) { S.st[k] = S.st[k] || {}; }); ['requests', 'checkpoints'].forEach(function (k) { S.st[k] = S.st[k] || []; });
+        sb.rpc('wl_portal_seen').then(function () {}, function () {});
+        if (!S.timer) S.timer = setInterval(refresh, 60000);
+        render();
+      });
+    }).catch(function (e) { showLogin(e.message || 'Não consegui entrar agora.'); });
+  }
+  function refresh() { if (document.hidden) return; load().then(function (row) { if (!row) return; if (row.content_at !== S.row.content_at) { S.row = row; S.c = row.content || {}; render(); } }, function () {}); }
+  function save(now) { clearTimeout(S.saveT); S.saveT = setTimeout(function () { sb.rpc('wl_portal_save', {p: S.st}).then(function (r) { if (r.error) toast('Não salvou: ' + r.error.message, 1); }); }, now ? 0 : 700); }
+  function toast(t, bad) { var d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:' + (bad ? 'var(--err)' : '#1f1c18') + ';color:#fff;padding:10px 16px;border-radius:12px;z-index:99;font-size:14px;max-width:90%'; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600); }
+
+  /* ---------- lógica ---------- */
+  function taskStatus(t) { var s = S.st.tasks[t.id]; return s && (!t.at || s.at > t.at) ? s.status : (t.status || 'todo'); }
+  function tasks() { return (S.c.tasks || []).map(function (t) { return Object.assign({}, t, {st: taskStatus(t)}); }); }
+  function progress() { var l = tasks(); if (!l.length) return 0; return Math.round(100 * l.filter(function (t) { return t.st === 'done'; }).length / l.length); }
+  function stepsDone() { var l = S.c.steps || []; return l.filter(function (s) { return S.st.steps[s.id]; }).length; }
+  function nextMeeting() { var td = today(); return (S.c.meetings || []).filter(function (m) { return !m.done && m.date && m.date >= td; }).sort(function (a, b) { return (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')); })[0]; }
+  function gcal(m) {
+    var d = String(m.date || '').replace(/-/g, ''); var t = String(m.time || '10:00').replace(':', '') + '00'; var dur = Number(m.duration || S.c.duracao || 60);
+    var st = new Date(m.date + 'T' + (m.time || '10:00') + ':00'); var en = new Date(st.getTime() + dur * 60000);
+    var f = function (x) { return x.getFullYear() + String(x.getMonth() + 1).padStart(2, '0') + String(x.getDate()).padStart(2, '0') + 'T' + String(x.getHours()).padStart(2, '0') + String(x.getMinutes()).padStart(2, '0') + '00'; };
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent((m.title || 'Encontro de mentoria') + ' · ' + (S.c.programa || 'Mentoria')) + '&dates=' + f(st) + '/' + f(en) + '&ctz=America/Sao_Paulo&details=' + encodeURIComponent('Mentoria com ' + (S.c.mentora || 'Waleska Lima') + (m.link ? '\nLink: ' + m.link : '')) + (m.link ? '&location=' + encodeURIComponent(m.link) : '');
+  }
+  function unreadNotices() { return (S.c.notices || []).filter(function (n) { return !S.st.reads[n.id]; }).length; }
+  function openReplies() { return (S.st.requests || []).filter(function (r) { var rep = (S.c.replies || {})[r.id] || []; return rep.length && !S.st.reads['r' + r.id + rep.length]; }).length; }
+
+  /* ---------- telas ---------- */
+  var NAV = [['home', '◈', 'Início'], ['steps', '✦', 'Primeiros passos'], ['plan', '☷', 'Plano de ação'], ['meet', '▦', 'Encontros e agenda'], ['analyses', '✎', 'Análises e correções'], ['links', '⛓', 'Links e materiais'], ['evo', '↗', 'Minha evolução'], ['notices', '🔔', 'Avisos'], ['contract', '▤', 'Contrato e diagnóstico'], ['money', '◫', 'Financeiro'], ['support', '☏', 'Suporte'], ['account', '⚙', 'Minha conta']];
+  function badge(k) { var n = k === 'notices' ? unreadNotices() : k === 'analyses' ? openReplies() : k === 'steps' ? ((S.c.steps || []).length - stepsDone()) : 0; return n > 0 ? '<span class="bd">' + n + '</span>' : ''; }
+  function render() {
+    var c = S.c; var first = String(c.first || c.name || '').split(' ')[0];
+    root.innerHTML = '<div class="mtop"><button id="mb" aria-label="Menu">☰</button><b>Central Magnética</b></div><div class="shade" id="sh"></div><div class="app"><aside class="side" id="sd"><div class="brand"><div class="k">CENTRAL</div><b>Magnética</b><div class="tiny" style="opacity:.7;margin-top:4px">' + esc(c.programa || 'Mentoria Escala Inteligente') + '</div></div><nav class="nav">'
+      + NAV.map(function (n) { return '<button data-v="' + n[0] + '" class="' + (S.view === n[0] ? 'on' : '') + '"><span class="ic">' + n[1] + '</span>' + n[2] + badge(n[0]) + '</button>'; }).join('')
+      + '</nav><div class="foot">' + esc(c.name || '') + '<br><button class="btn sm" id="out" style="margin-top:8px;background:transparent;color:var(--sideink);border-color:#3a3229">Sair</button></div></aside><main class="main" id="mn">' + view(first) + '</main></div>';
+    root.querySelectorAll('[data-v]').forEach(function (b) { b.onclick = function () { S.view = b.dataset.v; closeNav(); render(); scrollTo(0, 0); }; });
+    document.getElementById('out').onclick = function () { sb.auth.signOut().then(function () { showLogin('Você saiu. Até logo!', 1); }); };
+    var sd = document.getElementById('sd'), sh = document.getElementById('sh');
+    document.getElementById('mb').onclick = function () { sd.classList.add('open'); sh.classList.add('on'); }; sh.onclick = closeNav;
+    function closeNav() { sd.classList.remove('open'); sh.classList.remove('on'); }
+    wire();
+  }
+  function top(t, s, right) { return '<div class="top"><div><h2>' + t + '</h2>' + (s ? '<p class="s">' + s + '</p>' : '') + '</div>' + (right || '') + '</div>'; }
+  function view(first) {
+    var c = S.c, v = S.view;
+    if (v === 'home') {
+      var p = progress(), nm = nextMeeting(), open = tasks().filter(function (t) { return t.st !== 'done'; }), nx = open.sort(function (a, b) { return (a.due || '9').localeCompare(b.due || '9'); })[0];
+      var stepsLeft = (c.steps || []).length - stepsDone();
+      return '<div class="hero card"><div class="k">' + esc(c.programa || 'Mentoria') + (c.end ? ' · até ' + br(c.end) : '') + '</div><h3>Oi, ' + esc(first) + '!</h3><p>' + (c.welcome ? lnk(c.welcome) : 'Aqui fica tudo da sua mentoria: o seu plano, os encontros, os links e o que combinamos.') + '</p></div>'
+        + '<div class="grid" style="margin-bottom:16px"><div class="stat"><div class="l">Seu plano</div><div class="v">' + p + '%</div><div class="bar"><i style="width:' + p + '%"></i></div><div class="x">' + open.length + ' ' + (open.length === 1 ? 'ação aberta' : 'ações abertas') + ' de ' + tasks().length + '</div></div>'
+        + '<div class="stat"><div class="l">Próximo encontro</div><div class="v" style="font-size:20px">' + (nm ? br(nm.date) + (nm.time ? ' às ' + esc(nm.time) : '') : 'A agendar') + '</div><div class="x">' + (nm ? esc(nm.title || 'Encontro') : (c.booking ? '<a href="' + esc(safeUrl(c.booking)) + '" target="_blank" rel="noopener">Agendar agora →</a>' : '')) + '</div></div>'
+        + '<div class="stat"><div class="l">Primeiros passos</div><div class="v">' + stepsDone() + '/' + (c.steps || []).length + '</div><div class="x">' + (stepsLeft ? 'faltam ' + stepsLeft : 'tudo feito ✓') + '</div></div></div>'
+        + '<div class="card"><h3>👉 Sua próxima ação</h3>' + (nx ? '<div class="task"><div class="row"><span class="t grow">' + esc(nx.title) + '</span><span class="tag ' + nx.st + '">' + STL[nx.st] + '</span></div>' + (nx.due ? '<div class="tiny muted">Entrega: ' + br(nx.due) + '</div>' : '') + (nx.desc ? '<div class="small pre" style="margin-top:6px">' + lnk(nx.desc) + '</div>' : '') + '<button class="btn sm" data-v="plan" style="margin-top:10px">Ver meu plano</button></div>' : '<p class="muted">Nada em aberto agora. O que combinarmos no próximo encontro aparece aqui.</p>') + '</div>'
+        + (c.next ? '<div class="card"><h3>📌 O que combinamos</h3><div class="pre">' + lnk(c.next) + '</div></div>' : '')
+        + ((c.notices || []).length ? '<div class="card"><h3>🔔 Avisos recentes</h3>' + c.notices.slice(0, 2).map(function (n) { return '<div style="margin-bottom:10px"><b>' + esc(n.title) + '</b> <span class="tiny muted">' + br(n.date) + '</span><div class="small pre">' + lnk(n.text) + '</div></div>'; }).join('') + '</div>' : '');
+    }
+    if (v === 'steps') return top('Primeiros passos', 'Comece por aqui. Marque cada passo quando concluir.') + '<div class="card list">' + ((c.steps || []).map(function (s) { return '<div class="it"><input type="checkbox" class="chk" data-step="' + esc(s.id) + '" ' + (S.st.steps[s.id] ? 'checked' : '') + '><div class="grow"><div style="font-weight:600' + (S.st.steps[s.id] ? ';text-decoration:line-through;opacity:.6' : '') + '">' + esc(s.text) + '</div>' + (s.link ? '<a class="small" href="' + esc(safeUrl(s.link)) + '" target="_blank" rel="noopener">Abrir →</a>' : '') + '</div></div>'; }).join('') || '<div class="empty">Seus primeiros passos aparecem aqui.</div>') + '</div>';
+    if (v === 'plan') {
+      var l = tasks(); var p2 = progress();
+      var card = function (t) { return '<div class="task"><div class="row"><span class="t grow">' + esc(t.title) + '</span>' + (t.prio ? '<span class="tag ' + (t.prio === 'Alta' ? 'alta' : t.prio === 'Média' ? 'media' : '') + '">' + esc(t.prio) + '</span>' : '') + '</div>' + (t.due ? '<div class="tiny muted">Entrega: ' + br(t.due) + (t.due < today() && t.st !== 'done' ? ' · <b style="color:var(--err)">atrasada</b>' : '') + '</div>' : '') + (t.desc ? '<div class="small pre" style="margin-top:6px">' + lnk(t.desc) + '</div>' : '') + ((t.links || []).length ? '<div class="row" style="margin-top:6px">' + t.links.map(function (x) { return safeUrl(x.u) ? '<a class="btn sm" href="' + esc(safeUrl(x.u)) + '" target="_blank" rel="noopener">🔗 ' + esc(x.t || 'Link') + '</a>' : ''; }).join('') + '</div>' : '') + '<div class="row" style="margin-top:10px"><select data-task="' + esc(t.id) + '" style="width:auto;padding:6px 10px;font-size:13px">' + ST.map(function (s) { return '<option value="' + s[0] + '"' + (t.st === s[0] ? ' selected' : '') + '>' + s[1] + '</option>'; }).join('') + '</select>' + ((S.st.tasks[t.id] || {}).note ? '<span class="tiny muted">Sua nota: ' + esc(S.st.tasks[t.id].note) + '</span>' : '') + '<button class="btn sm" data-note="' + esc(t.id) + '">💬 Nota</button></div></div>'; };
+      return top('Plano de ação', 'O que combinamos, uma ação de cada vez. Mude o status conforme avança.', '<div class="seg"><button data-k="0" class="' + (S.kanban ? '' : 'on') + '">Lista</button><button data-k="1" class="' + (S.kanban ? 'on' : '') + '">Quadro</button></div>')
+        + '<div class="card"><div class="row"><b>' + p2 + '% concluído</b><span class="muted small">' + l.filter(function (t) { return t.st === 'done'; }).length + ' de ' + l.length + '</span></div><div class="bar"><i style="width:' + p2 + '%"></i></div></div>'
+        + (!l.length ? '<div class="card empty">O seu plano de ação aparece aqui depois do primeiro encontro.</div>' : S.kanban ? '<div class="kan">' + ST.map(function (s) { var it = l.filter(function (t) { return t.st === s[0]; }); return '<div class="col"><h4>' + s[1] + ' · ' + it.length + '</h4>' + it.map(card).join('') + '</div>'; }).join('') + '</div>'
+          : ST.map(function (s) { var it = l.filter(function (t) { return t.st === s[0]; }); return it.length ? '<h3 style="margin:18px 0 8px">' + s[1] + ' <span class="muted small">· ' + it.length + '</span></h3>' + it.map(card).join('') : ''; }).join(''));
+    }
+    if (v === 'meet') {
+      var ms = (c.meetings || []).slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); }); var nm2 = nextMeeting();
+      return top('Encontros e agenda', 'Seus encontros ao vivo, gravações e anotações.', c.booking ? '<a class="btn p" href="' + esc(safeUrl(c.booking)) + '" target="_blank" rel="noopener">📅 Agendar encontro</a>' : '')
+        + ((c.windows || []).length ? '<div class="card"><h3>🗓 Seus encontros por mês</h3>' + c.windows.map(function (w, i) { var on = w.ini <= today() && w.end >= today(); return '<div class="row" style="padding:6px 0"><span class="tag ' + (on ? 'doing' : '') + '">' + (on ? 'agora' : 'mês ' + (i + 1)) + '</span><span>' + br(w.ini) + ' a ' + br(w.end) + '</span><span class="muted small">· ' + w.n + ' ' + (w.n === 1 ? 'encontro' : 'encontros') + '</span></div>'; }).join('') + '<p class="tiny muted" style="margin:8px 0 0">Agende dentro de cada mês. Atraso acima de ' + (c.atraso || 10) + ' minutos encerra a reserva; reagendamento com 24h de antecedência.</p></div>' : '')
+        + (nm2 ? '<div class="card" style="border-color:var(--gold2)"><h3>⏭ Próximo: ' + esc(nm2.title || 'Encontro') + '</h3><p style="margin:0 0 10px">' + br(nm2.date) + (nm2.time ? ' às ' + esc(nm2.time) : '') + '</p><div class="row"><a class="btn p sm" href="' + gcal(nm2) + '" target="_blank" rel="noopener">+ Google Agenda</a>' + (safeUrl(nm2.link) ? '<a class="btn sm" href="' + esc(safeUrl(nm2.link)) + '" target="_blank" rel="noopener">Entrar na sala</a>' : '') + '</div></div>' : '')
+        + (ms.length ? ms.map(function (m) { return '<div class="card"><div class="row"><h3 class="grow" style="margin:0">' + esc(m.title || 'Encontro') + '</h3><span class="tag ' + (m.done ? 'done' : 'todo') + '">' + (m.done ? 'Realizado' : 'Agendado') + '</span></div><div class="small muted" style="margin:4px 0 8px">' + br(m.date) + (m.time ? ' às ' + esc(m.time) : '') + '</div>' + (!m.done && m.date ? '<a class="btn sm" href="' + gcal(m) + '" target="_blank" rel="noopener">+ Google Agenda</a> ' : '') + (safeUrl(m.recording) ? '<a class="btn sm" href="' + esc(safeUrl(m.recording)) + '" target="_blank" rel="noopener">▶ Gravação</a> ' : '') + (safeUrl(m.link) && !m.done ? '<a class="btn sm" href="' + esc(safeUrl(m.link)) + '" target="_blank" rel="noopener">Entrar na sala</a>' : '') + (m.summary ? '<div class="pre small" style="margin-top:12px;border-top:1px solid var(--stroke);padding-top:10px">' + lnk(m.summary) + '</div>' : '') + ((m.links || []).length ? '<div class="row" style="margin-top:8px">' + m.links.map(function (x) { return safeUrl(x.u) ? '<a class="btn sm" href="' + esc(safeUrl(x.u)) + '" target="_blank" rel="noopener">🔗 ' + esc(x.t || 'Link') + '</a>' : ''; }).join('') + '</div>' : '') + '</div>'; }).join('') : '<div class="card empty">Nenhum encontro ainda. Use o botão “Agendar encontro”.</div>');
+    }
+    if (v === 'analyses') {
+      var reqs = (S.st.requests || []).slice().reverse(); var posted = c.analyses || []; var nr = reqs.some(function (r) { var rep = (c.replies || {})[r.id] || []; return rep.length && !S.st.reads['r' + r.id + rep.length]; }); if (nr) setTimeout(function () { save(); }, 50);
+      return top('Análises e correções', 'Mande a sua página, criativo, copy ou perfil para análise. A resposta chega aqui.')
+        + '<div class="card"><h3>Novo pedido</h3><form id="rq"><div class="grid" style="grid-template-columns:1fr 1fr;gap:10px"><label class="f"><span>O que é</span><select name="type"><option>Página de vendas</option><option>Criativo / anúncio</option><option>Copy / texto</option><option>Perfil do Instagram</option><option>Funil / automação</option><option>Outro</option></select></label><label class="f"><span>Título</span><input name="title" required placeholder="Ex.: Página do curso X"></label></div><label class="f"><span>Link (opcional)</span><input name="url" placeholder="https://"></label><label class="f"><span>O que você quer que eu analise?</span><textarea name="text" required></textarea></label><button class="btn p">Enviar para análise</button></form></div>'
+        + (posted.length ? '<h3 style="margin:22px 0 10px">Análises que a sua mentora preparou</h3>' + posted.map(function (a) { return '<div class="card"><div class="row"><b class="grow">' + esc(a.title) + '</b><span class="tiny muted">' + br(a.date) + '</span></div>' + (safeUrl(a.url) ? '<a class="small" href="' + esc(safeUrl(a.url)) + '" target="_blank" rel="noopener">Abrir →</a>' : '') + '<div class="pre small" style="margin-top:6px">' + lnk(a.text) + '</div></div>'; }).join('') : '')
+        + (reqs.length ? '<h3 style="margin:22px 0 10px">Seus pedidos</h3>' + reqs.map(function (r) { var rep = (c.replies || {})[r.id] || []; S.st.reads['r' + r.id + rep.length] = 1; return '<div class="card"><div class="row"><span class="tag">' + esc(r.type) + '</span><b class="grow">' + esc(r.title) + '</b><span class="tag ' + (rep.length ? 'done' : 'review') + '">' + (rep.length ? 'Respondido' : 'Aguardando') + '</span></div><div class="tiny muted">' + br(r.at) + '</div>' + (safeUrl(r.url) ? '<a class="small" href="' + esc(safeUrl(r.url)) + '" target="_blank" rel="noopener">' + esc(r.url) + '</a>' : '') + '<div class="pre small" style="margin-top:6px">' + esc(r.text) + '</div>' + rep.map(function (x) { return '<div class="thread"><div class="tiny muted">' + esc(c.mentora || 'Mentora') + ' · ' + br(x.at) + '</div><div class="pre small">' + lnk(x.text) + '</div></div>'; }).join('') + '</div>'; }).join('') : '');
+    }
+    if (v === 'links') { var g = {}; (c.links || []).forEach(function (l) { (g[l.group || 'Links úteis'] = g[l.group || 'Links úteis'] || []).push(l); });
+      return top('Links e materiais', 'Tudo o que você precisa, num lugar só.') + (Object.keys(g).length ? Object.keys(g).map(function (k) { return '<div class="card"><h3>' + esc(k) + '</h3><div class="list">' + g[k].map(function (l) { return '<div class="it"><span>🔗</span><div class="grow"><a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener"><b>' + esc(l.title || l.url) + '</b></a>' + (l.note ? '<div class="tiny muted">' + esc(l.note) + '</div>' : '') + '</div></div>'; }).join('') + '</div></div>'; }).join('') : '<div class="card empty">Os seus links aparecem aqui.</div>'); }
+    if (v === 'evo') { var cp = (S.st.checkpoints || []).slice().reverse();
+      return top('Minha evolução', 'A cada mês, registre onde você chegou. A sua mentora acompanha com você.') + '<div class="grid" style="margin-bottom:16px"><div class="stat"><div class="l">Faturamento no início</div><div class="v" style="font-size:20px">' + esc(c.startRevenue || '-') + '</div></div><div class="stat"><div class="l">Último registro</div><div class="v" style="font-size:20px">' + esc(cp[0] ? cp[0].fat : '-') + '</div></div><div class="stat"><div class="l">Plano concluído</div><div class="v">' + progress() + '%</div></div></div>'
+        + '<div class="card"><h3>Registrar checkpoint</h3><form id="cp"><label class="f"><span>Faturamento do mês</span><input name="fat" placeholder="Ex.: R$ 3.200"></label><label class="f"><span>Principal conquista</span><textarea name="win"></textarea></label><label class="f"><span>Onde travou / precisa de ajuda</span><textarea name="stuck"></textarea></label><button class="btn p">Salvar checkpoint</button></form></div>'
+        + (cp.length ? '<div class="card"><h3>Histórico</h3><div class="list">' + cp.map(function (x) { return '<div class="it"><span class="tag">' + br(x.at) + '</span><div class="grow small"><b>' + esc(x.fat || '-') + '</b>' + (x.win ? '<div>🏆 ' + esc(x.win) + '</div>' : '') + (x.stuck ? '<div class="muted">🧱 ' + esc(x.stuck) + '</div>' : '') + '</div></div>'; }).join('') + '</div></div>' : ''); }
+    if (v === 'notices') { var ns = c.notices || []; ns.forEach(function (n) { S.st.reads[n.id] = S.st.reads[n.id] || new Date().toISOString(); }); if (ns.length) save();
+      return top('Avisos', 'Comunicados da sua mentora.') + (ns.length ? ns.map(function (n) { return '<div class="card"><div class="row"><b class="grow">' + esc(n.title) + '</b><span class="tiny muted">' + br(n.date) + '</span></div><div class="pre small" style="margin-top:6px">' + lnk(n.text) + '</div></div>'; }).join('') : '<div class="card empty">Nenhum aviso por enquanto.</div>'); }
+    if (v === 'contract') { var ct = c.contract || {}; var d = c.diagnosis || {};
+      return top('Contrato e diagnóstico', '') + '<div class="card"><h3>📄 Meu contrato</h3><p class="small">' + esc(ct.status || 'Em preparação') + (ct.value ? ' · ' + money(ct.value) : '') + (ct.inicio ? ' · ' + br(ct.inicio) + ' a ' + br(ct.fim) : '') + '</p>' + (safeUrl(ct.signedUrl) ? '<a class="btn p sm" href="' + esc(safeUrl(ct.signedUrl)) + '" target="_blank" rel="noopener">Abrir contrato assinado</a>' : '<p class="tiny muted">Quando as duas assinaturas estiverem prontas, o arquivo aparece aqui.</p>') + '</div>'
+        + '<div class="card"><h3>🧭 Meu diagnóstico de entrada</h3>' + (Object.keys(d).length ? Object.keys(d).map(function (k) { return '<div style="margin-bottom:10px"><div class="tiny muted">' + esc(k) + '</div><div class="pre small">' + esc(d[k]) + '</div></div>'; }).join('') : '<p class="muted small">As suas respostas do formulário de entrada aparecem aqui.</p>') + '</div>'; }
+    if (v === 'money') { var fn = c.finance || [];
+      return top('Financeiro', 'Suas parcelas e pagamentos.') + (fn.length ? '<div class="card"><div class="list">' + fn.map(function (x) { var late = x.status !== 'Pago' && x.date < today(); return '<div class="it"><span class="tag ' + (x.status === 'Pago' ? 'done' : late ? 'adjust' : 'todo') + '">' + (x.status === 'Pago' ? 'Pago' : late ? 'Em atraso' : 'A vencer') + '</span><div class="grow">' + esc(x.name || 'Parcela') + '<div class="tiny muted">' + br(x.date) + '</div></div><b>' + money(x.amount) + '</b>' + (x.status !== 'Pago' && safeUrl(x.link) ? '<a class="btn sm p" href="' + esc(safeUrl(x.link)) + '" target="_blank" rel="noopener">Pagar</a>' : '') + '</div>'; }).join('') + '</div></div>' : '<div class="card empty">Nenhuma parcela em aberto.</div>'); }
+    if (v === 'support') { var w = String(c.whats || '').replace(/\D/g, '');
+      return top('Suporte', esc(c.supportHours || 'De segunda a sexta, das 11h às 17h. Primeira resposta até as 17h do próximo dia útil.')) + '<div class="grid"><div class="card"><h3>💬 Grupo de suporte</h3>' + (safeUrl(c.group) ? '<a class="btn p" href="' + esc(safeUrl(c.group)) + '" target="_blank" rel="noopener">Abrir o meu grupo</a>' : '<p class="muted small">O seu grupo individual de suporte é criado pela sua mentora e o link aparece aqui.</p>') + '</div><div class="card"><h3>📱 WhatsApp</h3>' + (w ? '<a class="btn" href="https://wa.me/' + (w.length <= 11 ? '55' + w : w) + '" target="_blank" rel="noopener">Falar no WhatsApp</a>' : '<p class="muted small">Use o grupo de suporte.</p>') + '</div></div>'; }
+    if (v === 'account') return top('Minha conta', '') + '<div class="card"><h3>Trocar a senha</h3><form id="pw"><label class="f"><span>Nova senha (mínimo 8)</span><input type="password" name="p" minlength="8" autocomplete="new-password" required></label><label class="f"><span>Repita</span><input type="password" name="p2" required></label><button class="btn p">Salvar nova senha</button></form></div><div class="card"><h3>Aparência</h3><div class="seg"><button data-th="">Automática</button><button data-th="light">Clara</button><button data-th="dark">Escura</button></div></div>';
+    return '';
+  }
+  function wire() {
+    var mn = document.getElementById('mn');
+    mn.querySelectorAll('[data-step]').forEach(function (el) { el.onchange = function () { if (el.checked) S.st.steps[el.dataset.step] = new Date().toISOString(); else delete S.st.steps[el.dataset.step]; save(); render(); }; });
+    mn.querySelectorAll('[data-task]').forEach(function (el) { el.onchange = function () { var o = S.st.tasks[el.dataset.task] || {}; S.st.tasks[el.dataset.task] = Object.assign(o, {status: el.value, at: new Date().toISOString()}); save(); if (el.value === 'done') toast('Boa! Ação concluída 🎉'); render(); }; });
+    mn.querySelectorAll('[data-note]').forEach(function (el) { el.onclick = function () { var id = el.dataset.note; var cur = (S.st.tasks[id] || {}).note || ''; var t = prompt('Escreva uma nota para a sua mentora sobre esta ação:', cur); if (t == null) return; var o = S.st.tasks[id] || {status: taskStatus((S.c.tasks || []).find(function (x) { return x.id === id; }) || {}), at: new Date().toISOString()}; o.note = t.slice(0, 1000); o.noteAt = new Date().toISOString(); S.st.tasks[id] = o; save(); render(); }; });
+    mn.querySelectorAll('[data-k]').forEach(function (el) { el.onclick = function () { S.kanban = el.dataset.k === '1'; render(); }; });
+    mn.querySelectorAll('[data-v]').forEach(function (el) { el.onclick = function () { S.view = el.dataset.v; render(); scrollTo(0, 0); }; });
+    mn.querySelectorAll('[data-th]').forEach(function (el) { el.onclick = function () { var t = el.dataset.th; try { t ? localStorage.setItem('wl_central_theme', t) : localStorage.removeItem('wl_central_theme'); } catch (e) {} applyTheme(); }; });
+    var rq = document.getElementById('rq'); if (rq) rq.onsubmit = function (e) { e.preventDefault(); S.st.requests.push({id: uid(), at: new Date().toISOString(), type: rq.type.value, title: rq.title.value.trim().slice(0, 200), url: rq.url.value.trim().slice(0, 500), text: rq.text.value.trim().slice(0, 4000)}); save(true); toast('Pedido enviado! A resposta aparece aqui.'); render(); };
+    var cp = document.getElementById('cp'); if (cp) cp.onsubmit = function (e) { e.preventDefault(); S.st.checkpoints.push({at: new Date().toISOString(), fat: cp.fat.value.trim().slice(0, 80), win: cp.win.value.trim().slice(0, 1500), stuck: cp.stuck.value.trim().slice(0, 1500)}); save(true); toast('Checkpoint salvo'); render(); };
+    var pw = document.getElementById('pw'); if (pw) pw.onsubmit = function (e) { e.preventDefault(); if (pw.p.value !== pw.p2.value) return toast('As senhas não são iguais', 1); sb.auth.updateUser({password: pw.p.value}).then(function (r) { if (r.error) throw r.error; toast('Senha trocada'); pw.reset(); }).catch(function (err) { toast(err.message, 1); }); };
+  }
+  function applyTheme() { var t = ''; try { t = localStorage.getItem('wl_central_theme') || ''; } catch (e) {} if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme'); }
+  applyTheme();
+  if (!sb) { authBox('<p class="s">A central está em manutenção. Tente de novo em instantes.</p>'); return; }
+  if (Q.get('t')) showFirst(Q.get('t')); else boot();
+})();
+</script>
+</body>
+</html>
