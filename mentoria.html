@@ -29,7 +29,7 @@ h2{font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;font-weight:600
 .q label.t{display:block;font-weight:600;font-size:15px;margin:0 0 4px}
 .q .h{display:block;color:var(--mute);font-size:13.5px;margin:0 0 8px;white-space:pre-line}
 .q .req{color:var(--gold)}
-input[type=text],input[type=email],input[type=tel],textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;outline:none}
+input[type=text],input[type=email],input[type=tel],input[type=date],textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;outline:none}
 textarea{min-height:110px;resize:vertical}
 input:focus,textarea:focus,select:focus{border-color:var(--gold2);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold2) 25%,transparent)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -83,7 +83,7 @@ button:disabled{opacity:.55;cursor:wait}
       {k: 'nome', t: 'Nome completo', r: 1},
       {row: [{k: 'cpf', t: 'CPF', r: 1, ph: '000.000.000-00', cpf: 1}, {k: 'rg', t: 'RG'}]},
       {row: [{k: 'email', t: 'E-mail cadastrado', r: 1, type: 'email'}, {k: 'celular', t: 'Celular com DDD (WhatsApp)', r: 1, type: 'tel', ph: '(32) 99999-9999'}]},
-      {k: 'civil', t: 'Estado civil', sel: CIVIL},
+      {row: [{k: 'nascimento', t: 'Data de nascimento', r: 1, type: 'date'}, {k: 'civil', t: 'Estado civil', sel: CIVIL}]},
       {k: 'rua', t: 'Rua e número', r: 1, ph: 'Rua Exemplo, 123, apto 4'},
       {row: [{k: 'bairro', t: 'Bairro', r: 1}, {k: 'cep', t: 'CEP', r: 1, ph: '00000-000'}]},
       {row: [{k: 'cidade', t: 'Cidade', r: 1}, {k: 'uf', t: 'Estado', r: 1, sel: UF}]},
